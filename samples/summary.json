@@ -1,0 +1,45 @@
+{
+  "run_at": "2026-09-29T00:09:25",
+  "results": [
+    {
+      "check": "HTTPS api.travelpayouts.com",
+      "ok": true,
+      "detail": "18.172.242.25 -> HTTP 404"
+    },
+    {
+      "check": "HTTPS app.ticketmaster.com",
+      "ok": true,
+      "detail": "199.232.17.237 -> HTTP 404"
+    },
+    {
+      "check": "HTTP api.aviationstack.com",
+      "ok": true,
+      "detail": "104.26.0.173 -> HTTP 200"
+    },
+    {
+      "check": "HTTPS pypi.org",
+      "ok": true,
+      "detail": "151.101.128.223 -> HTTP 200"
+    },
+    {
+      "check": "HTTPS registry-1.docker.io",
+      "ok": true,
+      "detail": "174.129.184.189 -> HTTP 404"
+    },
+    {
+      "check": "Travelpayouts expected fields",
+      "ok": true,
+      "detail": "all present"
+    },
+    {
+      "check": "Travelpayouts auth + responses",
+      "ok": true,
+      "detail": "month 2026-10, origins ['BTS', 'VIE']"
+    },
+    {
+      "check": "Ticketmaster auth + coverage",
+      "ok": true,
+      "detail": "11 cities with >=20 theatre events"
+    }
+  ]
+}

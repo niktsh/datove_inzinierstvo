@@ -1,0 +1,394 @@
+{
+  "run_at": "2026-09-29T00:09:25",
+  "theatres": {
+    "Bratislava": {
+      "total": 0
+    },
+    "Košice": {
+      "total": 0
+    },
+    "Vienna": {
+      "total": 58,
+      "sampled": 58,
+      "with_price": 0,
+      "spelling": "Vienna",
+      "statuses": {
+        "onsale": 58
+      }
+    },
+    "Prague": {
+      "total": 0
+    },
+    "Budapest": {
+      "total": 0
+    },
+    "Warsaw": {
+      "total": 6,
+      "sampled": 6,
+      "with_price": 0,
+      "spelling": "Warsaw",
+      "statuses": {
+        "onsale": 6
+      }
+    },
+    "Krakow": {
+      "total": 98,
+      "sampled": 98,
+      "with_price": 0,
+      "spelling": "Krakow",
+      "statuses": {
+        "onsale": 98
+      }
+    },
+    "Berlin": {
+      "total": 573,
+      "sampled": 200,
+      "with_price": 0,
+      "spelling": "Berlin",
+      "statuses": {
+        "offsale": 2,
+        "onsale": 197,
+        "cancelled": 1
+      }
+    },
+    "Munich": {
+      "total": 62,
+      "sampled": 62,
+      "with_price": 0,
+      "spelling": "Munich",
+      "statuses": {
+        "rescheduled": 1,
+        "onsale": 59,
+        "cancelled": 1,
+        "offsale": 1
+      }
+    },
+    "Paris": {
+      "total": 0
+    },
+    "London": {
+      "total": 10000,
+      "sampled": 200,
+      "with_price": 0,
+      "spelling": "London",
+      "statuses": {
+        "rescheduled": 1,
+        "offsale": 30,
+        "cancelled": 6,
+        "onsale": 163
+      }
+    },
+    "Amsterdam": {
+      "total": 88,
+      "sampled": 88,
+      "with_price": 0,
+      "spelling": "Amsterdam",
+      "statuses": {
+        "onsale": 84,
+        "offsale": 3,
+        "rescheduled": 1
+      }
+    },
+    "Brussels": {
+      "total": 137,
+      "sampled": 137,
+      "with_price": 0,
+      "spelling": "Brussels",
+      "statuses": {
+        "onsale": 130,
+        "cancelled": 3,
+        "offsale": 4
+      }
+    },
+    "Madrid": {
+      "total": 1505,
+      "sampled": 200,
+      "with_price": 0,
+      "spelling": "Madrid",
+      "statuses": {
+        "offsale": 1,
+        "onsale": 199
+      }
+    },
+    "Barcelona": {
+      "total": 1,
+      "sampled": 1,
+      "with_price": 0,
+      "spelling": "Barcelona",
+      "statuses": {
+        "onsale": 1
+      }
+    },
+    "Rome": {
+      "total": 7,
+      "sampled": 7,
+      "with_price": 0,
+      "spelling": "Roma",
+      "statuses": {
+        "onsale": 7
+      }
+    },
+    "Milan": {
+      "total": 25,
+      "sampled": 25,
+      "with_price": 0,
+      "spelling": "Milano",
+      "statuses": {
+        "onsale": 25
+      }
+    },
+    "Copenhagen": {
+      "total": 0
+    },
+    "Stockholm": {
+      "total": 83,
+      "sampled": 83,
+      "with_price": 0,
+      "spelling": "Stockholm",
+      "statuses": {
+        "onsale": 82,
+        "offsale": 1
+      }
+    },
+    "Dublin": {
+      "total": 737,
+      "sampled": 200,
+      "with_price": 0,
+      "spelling": "Dublin",
+      "statuses": {
+        "onsale": 195,
+        "cancelled": 2,
+        "offsale": 2,
+        "rescheduled": 1
+      }
+    },
+    "Zurich": {
+      "total": 11,
+      "sampled": 11,
+      "with_price": 0,
+      "spelling": "Zurich",
+      "statuses": {
+        "onsale": 11
+      }
+    }
+  },
+  "flights": {
+    "Bratislava": {
+      "BTS": null,
+      "VIE": {
+        "offers": 15,
+        "min_price": 35
+      }
+    },
+    "Košice": {
+      "BTS": {
+        "offers": 10,
+        "min_price": 23
+      },
+      "VIE": {
+        "offers": 3,
+        "min_price": 87
+      }
+    },
+    "Vienna": {
+      "BTS": {
+        "offers": 10,
+        "min_price": 34
+      },
+      "VIE": null
+    },
+    "Prague": {
+      "BTS": {
+        "offers": 12,
+        "min_price": 62
+      },
+      "VIE": {
+        "offers": 22,
+        "min_price": 42
+      }
+    },
+    "Budapest": {
+      "BTS": {
+        "offers": 16,
+        "min_price": 33
+      },
+      "VIE": {
+        "offers": 19,
+        "min_price": 33
+      }
+    },
+    "Warsaw": {
+      "BTS": {
+        "offers": 21,
+        "min_price": 16
+      },
+      "VIE": {
+        "offers": 28,
+        "min_price": 23
+      }
+    },
+    "Krakow": {
+      "BTS": {
+        "offers": 11,
+        "min_price": 54
+      },
+      "VIE": {
+        "offers": 11,
+        "min_price": 16
+      }
+    },
+    "Berlin": {
+      "BTS": {
+        "offers": 18,
+        "min_price": 12
+      },
+      "VIE": {
+        "offers": 22,
+        "min_price": 52
+      }
+    },
+    "Munich": {
+      "BTS": {
+        "offers": 6,
+        "min_price": 76
+      },
+      "VIE": {
+        "offers": 14,
+        "min_price": 73
+      }
+    },
+    "Paris": {
+      "BTS": {
+        "offers": 27,
+        "min_price": 42
+      },
+      "VIE": {
+        "offers": 30,
+        "min_price": 26
+      }
+    },
+    "London": {
+      "BTS": {
+        "offers": 16,
+        "min_price": 22
+      },
+      "VIE": {
+        "offers": 20,
+        "min_price": 34
+      }
+    },
+    "Amsterdam": {
+      "BTS": {
+        "offers": 11,
+        "min_price": 67
+      },
+      "VIE": {
+        "offers": 28,
+        "min_price": 64
+      }
+    },
+    "Brussels": {
+      "BTS": {
+        "offers": 17,
+        "min_price": 16
+      },
+      "VIE": {
+        "offers": 22,
+        "min_price": 25
+      }
+    },
+    "Madrid": {
+      "BTS": {
+        "offers": 10,
+        "min_price": 65
+      },
+      "VIE": {
+        "offers": 26,
+        "min_price": 37
+      }
+    },
+    "Barcelona": {
+      "BTS": {
+        "offers": 25,
+        "min_price": 16
+      },
+      "VIE": {
+        "offers": 28,
+        "min_price": 27
+      }
+    },
+    "Rome": {
+      "BTS": {
+        "offers": 22,
+        "min_price": 12
+      },
+      "VIE": {
+        "offers": 30,
+        "min_price": 21
+      }
+    },
+    "Milan": {
+      "BTS": {
+        "offers": 25,
+        "min_price": 15
+      },
+      "VIE": {
+        "offers": 29,
+        "min_price": 16
+      }
+    },
+    "Copenhagen": {
+      "BTS": {
+        "offers": 5,
+        "min_price": 51
+      },
+      "VIE": {
+        "offers": 20,
+        "min_price": 16
+      }
+    },
+    "Stockholm": {
+      "BTS": {
+        "offers": 17,
+        "min_price": 32
+      },
+      "VIE": {
+        "offers": 17,
+        "min_price": 22
+      }
+    },
+    "Dublin": {
+      "BTS": {
+        "offers": 7,
+        "min_price": 24
+      },
+      "VIE": {
+        "offers": 4,
+        "min_price": 64
+      }
+    },
+    "Zurich": {
+      "BTS": {
+        "offers": 5,
+        "min_price": 46
+      },
+      "VIE": {
+        "offers": 20,
+        "min_price": 52
+      }
+    }
+  },
+  "candidates": [
+    "Vienna",
+    "Krakow",
+    "Berlin",
+    "Munich",
+    "London",
+    "Amsterdam",
+    "Brussels",
+    "Madrid",
+    "Milan",
+    "Stockholm",
+    "Dublin"
+  ]
+}
