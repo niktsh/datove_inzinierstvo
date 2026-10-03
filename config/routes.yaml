@@ -1,0 +1,23 @@
+# Маршруты в Краков (только в одну сторону). Проверено реальным запросом 2026-10-03.
+# `query` — код, по которому спрашиваем Travelpayouts (может быть кодом города:
+# BRU -> CRL, OSL -> TRF); реальный аэропорт берётся из ответа.
+destination: KRK
+horizon_days: 90
+currency: eur
+max_stops: 0        # только прямые рейсы; сырой ответ в raw.fetch_log хранится целиком
+
+origins:
+  - {query: ARN, note: "Stockholm Arlanda"}
+  - {query: BGY, note: "Milan Bergamo"}
+  - {query: CPH, note: "Copenhagen"}
+  - {query: BRU, note: "Brussels (в ответе в основном CRL Charleroi)"}
+  - {query: OSL, note: "Oslo (в ответе в основном TRF Torp)"}
+  - {query: BCN, note: "Barcelona"}
+  - {query: FCO, note: "Rome Fiumicino"}
+  - {query: VIE, note: "Vienna"}
+  - {query: LTN, note: "London Luton"}
+  - {query: STN, note: "London Stansted"}
+  - {query: DUB, note: "Dublin"}
+  - {query: EIN, note: "Eindhoven"}
+  - {query: MAD, note: "Madrid (мало прямых)"}
+  - {query: MLA, note: "Malta (мало прямых)"}

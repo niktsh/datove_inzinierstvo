@@ -25,11 +25,11 @@
 **Готово, когда:** миграции поднимаются и откатываются; тест upsert проходит на реальной БД из docker compose (без testcontainers).
 
 ## Фаза 2 — Сборщик Travelpayouts
-- [ ] Регистрация, токен в `.env` (`TRAVELPAYOUTS_TOKEN`)
-- [ ] `config/routes.yaml`: ≥10 аэропортов отправления → KRK
-- [ ] Записать реальные ответы в `tests/fixtures/travelpayouts/`
-- [ ] fetch → `raw.fetch_log` → parse → upsert, обработка пустых ответов и лимитов
-- [ ] Проверить, по каким маршрутам кэш реально даёт данные; записать вывод в `OTVORENE_OTAZKY.md`
+- [x] Регистрация, токен в `.env` (`TRAVELPAYOUTS_TOKEN`)
+- [x] `config/routes.yaml`: ≥10 аэропортов отправления → KRK
+- [x] Записать реальные ответы в `tests/fixtures/travelpayouts/`
+- [x] fetch → `raw.fetch_log` → parse → upsert, обработка пустых ответов и лимитов
+- [x] Проверить, по каким маршрутам кэш реально даёт данные; записать вывод в `OTVORENE_OTAZKY.md`
 
 **Готово, когда:** один запуск наполняет `core.flight_offer` реальными предложениями по ≥5 маршрутам.
 

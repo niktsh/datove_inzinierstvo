@@ -20,4 +20,10 @@ uv run ruff check .
 - Kafka UI: http://localhost:8080 (только localhost)
 - PostgreSQL: `localhost:5433` (5432 часто занят локальным Postgres), Kafka: `localhost:9092`
 
+Один запуск сборщика Travelpayouts (нужен `TRAVELPAYOUTS_TOKEN` в `.env`):
+
+```bash
+uv run python -m krakow_di.collectors.travelpayouts
+```
+
 Остановить: `docker compose down` (данные сохраняются в volumes; `-v` удаляет их).
