@@ -25,7 +25,7 @@
 | `event_version` | int | Версия схемы `data` для этого типа. |
 | `occurred_at` | ISO 8601 UTC | Когда событие произошло (не когда отправлено). |
 | `producer` | string | Наш идентификатор. |
-| `source` | enum | `travelpayouts` \| `wizzair` \| `theater` \| `generator` |
+| `source` | enum | `travelpayouts` \| `ryanair` \| `theater` \| `generator` |
 | `data` | object | Тело события, зависит от типа. |
 
 ## Авиабилеты
@@ -38,13 +38,13 @@
   "destination_iata": "KRK",
   "departure_at": "2026-11-20T06:15:00+01:00",
   "arrival_at": "2026-11-20T09:10:00+01:00",
-  "airline_iata": "W6",
-  "flight_number": "W62048",
+  "airline_iata": "FR",
+  "flight_number": "FR3035",
   "stops": 0,
   "price": 54.99,
   "currency": "EUR",
-  "seats_total": 239,
-  "seats_left": 171,
+  "seats_total": 189,
+  "seats_left": 141,
   "seats_simulated": true,
   "observed_at": "2026-10-14T06:00:12Z"
 }
@@ -68,13 +68,13 @@
   "origin_iata": "BCN",
   "destination_iata": "KRK",
   "departure_at": "2026-11-20T06:15:00+01:00",
-  "airline_iata": "W6",
-  "flight_number": "W62048",
+  "airline_iata": "FR",
+  "flight_number": "FR3035",
   "quantity": 2,
   "unit_price": 54.99,
   "total_price": 109.98,
   "currency": "EUR",
-  "seats_left_after": 169,
+  "seats_left_after": 139,
   "sold_at": "2026-10-14T09:31:05Z"
 }
 ```

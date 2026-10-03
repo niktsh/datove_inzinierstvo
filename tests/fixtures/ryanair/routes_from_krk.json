@@ -1,0 +1,483 @@
+[
+ {
+  "arrivalAirport": {
+   "code": "ARN",
+   "name": "Stockholm Arlanda",
+   "seoName": "stockholm-arlandia",
+   "aliases": [],
+   "base": true,
+   "city": {
+    "name": "Stockholm",
+    "code": "STOCKHOLM",
+    "macCode": "SLM"
+   },
+   "macCity": {
+    "name": "Stockholm",
+    "code": "STOCKHOLM",
+    "macCode": "SLM"
+   },
+   "region": {
+    "name": "Stockholm",
+    "code": "STOCKHOLM"
+   },
+   "country": {
+    "code": "se",
+    "iso3code": "SWE",
+    "name": "Sweden",
+    "currency": "SEK",
+    "defaultAirportCode": "NYO",
+    "schengen": true
+   },
+   "coordinates": {
+    "latitude": 59.6498,
+    "longitude": 17.9239
+   },
+   "timeZone": "Europe/Stockholm"
+  },
+  "recent": false,
+  "seasonal": false,
+  "operator": "FR",
+  "tags": []
+ },
+ {
+  "arrivalAirport": {
+   "code": "BCN",
+   "name": "Barcelona",
+   "seoName": "barcelona-el-prat",
+   "aliases": [],
+   "base": true,
+   "city": {
+    "name": "Barcelona",
+    "code": "BARCELONA",
+    "macCode": "BAR"
+   },
+   "macCity": {
+    "name": "Barcelona",
+    "code": "BARCELONA",
+    "macCode": "BAR"
+   },
+   "region": {
+    "name": "Costa Brava",
+    "code": "COSTA_BRAVA"
+   },
+   "country": {
+    "code": "es",
+    "iso3code": "ESP",
+    "name": "Spain",
+    "currency": "EUR",
+    "defaultAirportCode": "BCN",
+    "schengen": true
+   },
+   "coordinates": {
+    "latitude": 41.2971,
+    "longitude": 2.07846
+   },
+   "timeZone": "Europe/Madrid"
+  },
+  "recent": false,
+  "seasonal": false,
+  "operator": "FR",
+  "tags": []
+ },
+ {
+  "arrivalAirport": {
+   "code": "BGY",
+   "name": "Milan Bergamo",
+   "seoName": "milan-bergamo",
+   "aliases": [],
+   "base": true,
+   "city": {
+    "name": "Bergamo",
+    "code": "BERGAMO"
+   },
+   "macCity": {
+    "name": "Milan",
+    "code": "MILAN",
+    "macCode": "MIL"
+   },
+   "region": {
+    "name": "Lombardy",
+    "code": "LOMBARDY"
+   },
+   "country": {
+    "code": "it",
+    "iso3code": "ITA",
+    "name": "Italy",
+    "currency": "EUR",
+    "defaultAirportCode": "BGY",
+    "schengen": true
+   },
+   "coordinates": {
+    "latitude": 45.6739,
+    "longitude": 9.70417
+   },
+   "timeZone": "Europe/Rome"
+  },
+  "recent": false,
+  "seasonal": false,
+  "operator": "FR",
+  "tags": []
+ },
+ {
+  "arrivalAirport": {
+   "code": "CPH",
+   "name": "Copenhagen",
+   "seoName": "copenhagen",
+   "aliases": [],
+   "base": false,
+   "city": {
+    "name": "Copenhagen",
+    "code": "COPENHAGEN"
+   },
+   "region": {
+    "name": "Bornholm",
+    "code": "BORNHOLM"
+   },
+   "country": {
+    "code": "dk",
+    "iso3code": "DNK",
+    "name": "Denmark",
+    "currency": "DKK",
+    "defaultAirportCode": "BLL",
+    "schengen": true
+   },
+   "coordinates": {
+    "latitude": 55.6181,
+    "longitude": 12.6561
+   },
+   "timeZone": "Europe/Copenhagen"
+  },
+  "recent": false,
+  "seasonal": false,
+  "operator": "FR",
+  "tags": []
+ },
+ {
+  "arrivalAirport": {
+   "code": "CRL",
+   "name": "Brussels Charleroi",
+   "seoName": "brussels-charleroi",
+   "aliases": [],
+   "base": true,
+   "city": {
+    "name": "Charleroi",
+    "code": "CHARLEROI"
+   },
+   "macCity": {
+    "name": "Brussels",
+    "code": "BRUSSELS",
+    "macCode": "BRL"
+   },
+   "region": {
+    "name": "Wallonia",
+    "code": "WALLONIA"
+   },
+   "country": {
+    "code": "be",
+    "iso3code": "BEL",
+    "name": "Belgium",
+    "currency": "EUR",
+    "defaultAirportCode": "BRU",
+    "schengen": true
+   },
+   "coordinates": {
+    "latitude": 50.4592,
+    "longitude": 4.45382
+   },
+   "timeZone": "Europe/Brussels"
+  },
+  "recent": false,
+  "seasonal": false,
+  "operator": "FR",
+  "tags": []
+ },
+ {
+  "arrivalAirport": {
+   "code": "DUB",
+   "name": "Dublin",
+   "seoName": "dublin",
+   "aliases": [],
+   "base": true,
+   "city": {
+    "name": "Dublin",
+    "code": "DUBLIN"
+   },
+   "region": {
+    "name": "Leinster",
+    "code": "LEINSTER"
+   },
+   "country": {
+    "code": "ie",
+    "iso3code": "IRL",
+    "name": "Ireland",
+    "currency": "EUR",
+    "defaultAirportCode": "DUB",
+    "schengen": false
+   },
+   "coordinates": {
+    "latitude": 53.4213,
+    "longitude": -6.27007
+   },
+   "timeZone": "Europe/Dublin"
+  },
+  "recent": false,
+  "seasonal": false,
+  "operator": "FR",
+  "tags": []
+ },
+ {
+  "arrivalAirport": {
+   "code": "EIN",
+   "name": "Eindhoven",
+   "seoName": "eindhoven",
+   "aliases": [],
+   "base": true,
+   "city": {
+    "name": "Eindhoven",
+    "code": "EINDHOVEN"
+   },
+   "region": {
+    "name": "North Brabant",
+    "code": "NORTH_BRABANT"
+   },
+   "country": {
+    "code": "nl",
+    "iso3code": "NLD",
+    "name": "Netherlands",
+    "currency": "EUR",
+    "defaultAirportCode": "EIN",
+    "schengen": true
+   },
+   "coordinates": {
+    "latitude": 51.4501,
+    "longitude": 5.37453
+   },
+   "timeZone": "Europe/Amsterdam"
+  },
+  "recent": false,
+  "seasonal": false,
+  "operator": "FR",
+  "tags": []
+ },
+ {
+  "arrivalAirport": {
+   "code": "LTN",
+   "name": "London Luton",
+   "seoName": "london-luton",
+   "aliases": [],
+   "base": true,
+   "city": {
+    "name": "London",
+    "code": "LONDON",
+    "macCode": "LON"
+   },
+   "macCity": {
+    "name": "London",
+    "code": "LONDON",
+    "macCode": "LON"
+   },
+   "region": {
+    "name": "England",
+    "code": "ENGLAND"
+   },
+   "country": {
+    "code": "gb",
+    "iso3code": "GBR",
+    "name": "United Kingdom",
+    "currency": "GBP",
+    "defaultAirportCode": "STN",
+    "schengen": false
+   },
+   "coordinates": {
+    "latitude": 51.8747,
+    "longitude": -0.368333
+   },
+   "timeZone": "Europe/London"
+  },
+  "recent": false,
+  "seasonal": false,
+  "operator": "FR",
+  "tags": []
+ },
+ {
+  "arrivalAirport": {
+   "code": "MAD",
+   "name": "Madrid",
+   "seoName": "madrid",
+   "aliases": [],
+   "base": true,
+   "city": {
+    "name": "Madrid",
+    "code": "MADRID"
+   },
+   "region": {
+    "name": "Madrid",
+    "code": "MADRID"
+   },
+   "country": {
+    "code": "es",
+    "iso3code": "ESP",
+    "name": "Spain",
+    "currency": "EUR",
+    "defaultAirportCode": "BCN",
+    "schengen": true
+   },
+   "coordinates": {
+    "latitude": 40.4722,
+    "longitude": -3.5608
+   },
+   "timeZone": "Europe/Madrid"
+  },
+  "recent": false,
+  "seasonal": false,
+  "operator": "FR",
+  "tags": []
+ },
+ {
+  "arrivalAirport": {
+   "code": "MLA",
+   "name": "Malta",
+   "seoName": "malta",
+   "aliases": [],
+   "base": true,
+   "city": {
+    "name": "Malta",
+    "code": "MALTA"
+   },
+   "region": {
+    "name": "Malta",
+    "code": "MALTA"
+   },
+   "country": {
+    "code": "mt",
+    "iso3code": "MLT",
+    "name": "Malta",
+    "currency": "EUR",
+    "defaultAirportCode": "MLA",
+    "schengen": true
+   },
+   "coordinates": {
+    "latitude": 35.8575,
+    "longitude": 14.4775
+   },
+   "timeZone": "Europe/Malta"
+  },
+  "recent": false,
+  "seasonal": false,
+  "operator": "FR",
+  "tags": []
+ },
+ {
+  "arrivalAirport": {
+   "code": "STN",
+   "name": "London Stansted",
+   "seoName": "london-stansted",
+   "aliases": [],
+   "base": true,
+   "city": {
+    "name": "London",
+    "code": "LONDON",
+    "macCode": "LON"
+   },
+   "macCity": {
+    "name": "London",
+    "code": "LONDON",
+    "macCode": "LON"
+   },
+   "region": {
+    "name": "England",
+    "code": "ENGLAND"
+   },
+   "country": {
+    "code": "gb",
+    "iso3code": "GBR",
+    "name": "United Kingdom",
+    "currency": "GBP",
+    "defaultAirportCode": "STN",
+    "schengen": false
+   },
+   "coordinates": {
+    "latitude": 51.885,
+    "longitude": 0.235
+   },
+   "timeZone": "Europe/London"
+  },
+  "recent": false,
+  "seasonal": false,
+  "operator": "FR",
+  "tags": []
+ },
+ {
+  "arrivalAirport": {
+   "code": "TRF",
+   "name": "Oslo Torp",
+   "seoName": "oslo-torp",
+   "aliases": [],
+   "base": false,
+   "city": {
+    "name": "Sandefjord",
+    "code": "SANDEFJORD"
+   },
+   "macCity": {
+    "name": "Oslo",
+    "code": "OSLO",
+    "macCode": "OSO"
+   },
+   "region": {
+    "name": "Vestfold",
+    "code": "VESTFOLD"
+   },
+   "country": {
+    "code": "no",
+    "iso3code": "NOR",
+    "name": "Norway",
+    "currency": "NOK",
+    "defaultAirportCode": "RYG",
+    "schengen": true
+   },
+   "coordinates": {
+    "latitude": 59.1867,
+    "longitude": 10.2586
+   },
+   "timeZone": "Europe/Oslo"
+  },
+  "recent": false,
+  "seasonal": false,
+  "operator": "FR",
+  "tags": []
+ },
+ {
+  "arrivalAirport": {
+   "code": "VIE",
+   "name": "Vienna",
+   "seoName": "vienna",
+   "aliases": [],
+   "base": true,
+   "city": {
+    "name": "Vienna",
+    "code": "VIENNA"
+   },
+   "region": {
+    "name": "Vienna",
+    "code": "VIENNA"
+   },
+   "country": {
+    "code": "at",
+    "iso3code": "AUT",
+    "name": "Austria",
+    "currency": "EUR",
+    "defaultAirportCode": "VIE",
+    "schengen": true
+   },
+   "coordinates": {
+    "latitude": 48.123,
+    "longitude": 16.2221
+   },
+   "timeZone": "Europe/Vienna"
+  },
+  "recent": false,
+  "seasonal": false,
+  "operator": "FR",
+  "tags": []
+ }
+]

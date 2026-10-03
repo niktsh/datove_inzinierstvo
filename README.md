@@ -1,6 +1,6 @@
 # Kraków DI
 
-Сбор авиабилетов (Travelpayouts, Wizz Air) и данных театра в Кракове, генератор продаж,
+Сбор авиабилетов (Travelpayouts, Ryanair) и данных театра в Кракове, генератор продаж,
 стриминг через Kafka, data lake. Документация — в [docs/](docs/), план — [docs/PLAN.md](docs/PLAN.md).
 
 ## Запуск с нуля
@@ -24,6 +24,7 @@ uv run ruff check .
 
 ```bash
 uv run python -m krakow_di.collectors.travelpayouts
+uv run python -m krakow_di.collectors.ryanair --days 4   # без --days: весь горизонт, ~30 мин
 ```
 
 Остановить: `docker compose down` (данные сохраняются в volumes; `-v` удаляет их).

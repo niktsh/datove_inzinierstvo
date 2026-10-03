@@ -6,13 +6,13 @@
 flowchart LR
   subgraph Sources[Внешние источники]
     TP[Travelpayouts API]
-    WZ[wizzair.com]
+    RY[Ryanair Fare Finder API]
     TH[Сайт театра]
   end
 
   subgraph Us[Наша система]
     C1[collector: travelpayouts]
-    C2[collector: wizzair]
+    C2[collector: ryanair]
     C3[collector: theater]
     RAW[(PostgreSQL: raw.*)]
     CORE[(PostgreSQL: core.*)]
@@ -27,7 +27,7 @@ flowchart LR
   OT[Другие команды]
 
   TP --> C1
-  WZ --> C2
+  RY --> C2
   TH --> C3
   C1 & C2 & C3 --> RAW
   C1 & C2 & C3 --> CORE
@@ -52,10 +52,10 @@ flowchart LR
 | Сборщик | Как | Частота (по умолчанию) | Особенности |
 |---|---|---|---|
 | `travelpayouts` | httpx, REST, токен из `.env` | каждые 6 ч | Данные из **кэша** поисков пользователей Aviasales, не живые цены. Нет числа мест. Параметр рынка (`market`) влияет на наличие данных. Эндпоинт v3 `prices_for_dates` с `one_way=true`, `destination=KRK`. |
-| `wizzair` | Playwright (настоящий браузер), перехват JSON-ответов внутреннего API сайта | каждые 6–12 ч | Сайт защищён от ботов. Сначала — исследование (spike): какие запросы делает сайт, записать ответы в фикстуры. Маршруты в KRK брать из их расписания. |
-| `theater` | httpx или Playwright — зависит от системы продажи | программа: раз в сутки; наличие мест: каждые 2–6 ч | Реальные продажи вычисляем из **уменьшения свободных мест** между снимками. |
+| `ryanair` | httpx, публичный Fare Finder API (`/api/farfnd/v4/oneWayFares`), без токена | каждые 12 ч (полный проход ≈ 30 мин) | API отдаёт одну самую дешёвую прямую цену на окно дат, поэтому один запрос на аэропорт и день (`From = To`), пауза 1,5 с. Время вылета локальное, без смещения: часовой пояс берётся из официального списка маршрутов KRK. Нет числа мест. При серии ошибок подряд запуск прекращается (признак блокировки). Подробности: `docs/zdroje/ryanair.md`. Wizz Air отклонён: интерактивная проверка на человека (`docs/zdroje/wizzair.md`). |
+| `theater` | httpx или Playwright (если понадобится, добавить зависимость) — зависит от системы продажи | программа: раз в сутки; наличие мест: каждые 2–6 ч | Реальные продажи вычисляем из **уменьшения свободных мест** между снимками. |
 
-Список аэропортов отправления — в `config/routes.yaml`, минимум 10 маршрутов в KRK. Горизонт дат — 90 дней (настраивается).
+Список аэропортов отправления — в `config/routes.yaml` (Travelpayouts) и `config/routes_ryanair.yaml` (кандидаты, пересекаются с официальным списком маршрутов Ryanair при каждом запуске), минимум 10 маршрутов в KRK. Оба сборщика берут только прямые рейсы. Горизонт дат — 90 дней (настраивается).
 
 ### 2. Генератор (`generator/`)
 
@@ -137,7 +137,7 @@ flowchart LR
 ## Развёртывание
 
 - `docker-compose.yml`: `postgres` (`postgres:16.15-alpine`), `kafka` (`apache/kafka:4.1.0`, KRaft, 1 брокер), `kafka-ui` (`kafbat/kafka-ui:v1.4.2`), `app` (scheduler: сборщики + генератор + publisher), `api`, `lake`.
-- Python 3.12. Playwright — отдельный образ на базе официального образа Playwright для Python.
+- Python 3.12. Если театру понадобится браузер, Playwright ставится отдельным образом на базе официального образа Playwright для Python (для авиасборщиков он не нужен).
 - Цель: сервер с публичным адресом (Hron/ÚVT или VPS). Наружу: Kafka EXTERNAL listener (SASL_SSL), HTTP API через reverse proxy с HTTPS. `kafka-ui` наружу **не** открывать.
 
 ## Почему Kafka (обоснование для презентации)

@@ -16,6 +16,7 @@ class RunSummary:
     requests: int = 0
     errors: int = 0
     empty: int = 0
+    aborted: bool = False
     changes: list[OfferChange] = field(default_factory=list)
 
     def counts(self) -> dict[str, int]:

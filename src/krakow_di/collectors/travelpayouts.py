@@ -11,6 +11,7 @@ import httpx
 import psycopg
 
 from krakow_di.collectors.base import OfferChange, RunSummary
+from krakow_di.collectors.http import get_with_retry
 from krakow_di.config import Settings, get_settings
 from krakow_di.db import connect
 from krakow_di.repo.flight_offers import OfferObservation, upsert_offer
@@ -19,7 +20,6 @@ from krakow_di.routes import RoutesConfig, load_routes
 
 SOURCE = "travelpayouts"
 URL = "https://api.travelpayouts.com/aviasales/v3/prices_for_dates"
-RETRY_STATUSES = {429, 500, 502, 503, 504}
 
 log = logging.getLogger(__name__)
 
@@ -96,25 +96,11 @@ class TravelpayoutsCollector:
         }
 
     def fetch(self, params: dict) -> httpx.Response | None:
-        """GET with retry on 429/5xx/network errors (exponential backoff, honours Retry-After)."""
-        headers = {"X-Access-Token": self.settings.travelpayouts_token}
-        resp = None
-        for attempt in range(self.max_attempts):
-            try:
-                resp = self.client.get(URL, params=params, headers=headers)
-            except httpx.TransportError as e:
-                log.warning("network error %s (attempt %d)", type(e).__name__, attempt + 1)
-                resp = None
-            else:
-                if resp.status_code not in RETRY_STATUSES:
-                    return resp
-                log.warning("HTTP %d (attempt %d)", resp.status_code, attempt + 1)
-            if attempt + 1 < self.max_attempts:
-                delay = 2.0**attempt
-                if resp is not None and resp.headers.get("Retry-After", "").isdigit():
-                    delay = max(delay, float(resp.headers["Retry-After"]))
-                self.sleep(delay)
-        return resp
+        return get_with_retry(
+            self.client, URL, params=params,
+            headers={"X-Access-Token": self.settings.travelpayouts_token},
+            max_attempts=self.max_attempts, sleep=self.sleep,
+        )
 
     def run(self, conn: psycopg.Connection) -> RunSummary:
         summary = RunSummary()

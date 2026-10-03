@@ -1,0 +1,12 @@
+# Ryanair: кандидаты на отправление в Краков. Реально используются только те, что есть
+# в официальном списке маршрутов KRK у самого Ryanair (проверяется при каждом запуске).
+# Проверено spike 2026-10-03: доступны ARN BCN BGY CPH CRL DUB EIN LTN MAD MLA STN TRF VIE.
+destination: KRK
+destination_tz: Europe/Warsaw
+horizon_days: 90
+currency: EUR
+market: en-gb
+pause_seconds: 1.5          # пауза между запросами (источник неофициальный, не нагружаем)
+max_consecutive_errors: 5   # столько ошибок подряд, и запуск прекращается (признак блокировки)
+
+candidates: [ARN, BCN, BGY, CPH, CRL, DUB, EIN, LTN, MAD, MLA, STN, TRF, VIE, FCO, CIA, OSL, BRU]
