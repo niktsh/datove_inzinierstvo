@@ -5,7 +5,9 @@ description = "Kraków flights + theater data collection, Kafka streaming and da
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "alembic>=1.20.0",
     "httpx>=0.28",
+    "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.6",
     "python-dotenv>=1.0",
 ]

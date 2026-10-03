@@ -18,9 +18,9 @@
 **Готово, когда:** `docker compose up -d && uv run pytest` работает на чистой машине.
 
 ## Фаза 1 — База данных
-- [ ] Alembic, схемы `raw`, `core`, `lake` и таблицы из `ARCHITEKTURA.md`
-- [ ] Функция генерации детерминированного `offer_id` (`source + origin + destination + departure_at до минуты + airline_iata`, без `flight_number`/`fare_key`) + тест
-- [ ] Репозиторий/функции upsert для `flight_offer` с записью в `flight_offer_history`
+- [x] Alembic, схемы `raw`, `core`, `lake` и таблицы из `ARCHITEKTURA.md`
+- [x] Функция генерации детерминированного `offer_id` (`source + origin + destination + departure_at до минуты + airline_iata`, без `flight_number`/`fare_key`) + тест
+- [x] Репозиторий/функции upsert для `flight_offer` с записью в `flight_offer_history`
 
 **Готово, когда:** миграции поднимаются и откатываются; тест upsert проходит на реальной БД из docker compose (без testcontainers).
 

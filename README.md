@@ -12,7 +12,8 @@ cp .env.example .env        # заполнить TRAVELPAYOUTS_TOKEN и паро
 uv sync                     # Python 3.12 + зависимости
 docker compose up -d        # postgres, kafka, kafka-ui
 docker compose ps           # все сервисы должны быть healthy
-uv run pytest
+uv run alembic upgrade head   # схемы raw/core/lake
+uv run pytest                 # тесты БД идут в временную БД на compose-Postgres
 uv run ruff check .
 ```
 
