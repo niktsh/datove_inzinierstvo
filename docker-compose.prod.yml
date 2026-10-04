@@ -1,0 +1,170 @@
+# Produkčné nasadenie Kraków DI: postgres, Kafka (SASL_SSL pre ostatné tímy), plánovač, API, data lake,
+# reverse proxy s HTTPS a denná záloha DB. Spustenie a postup: docs/NASADENIE.md.
+#   docker compose -f docker-compose.prod.yml up -d --build
+# kafka-ui je v profile `tools` a publikuje sa iba na localhost (von ho neotvárame).
+
+x-logging: &logging
+  driver: json-file
+  options: {max-size: "10m", max-file: "5"}
+
+x-app-env: &app-env
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  KAFKA_BOOTSTRAP_SERVERS: kafka:19092   # INTERNAL listener v docker sieti
+
+x-app: &app
+  build: .
+  image: krakow-di:latest
+  env_file: ${APP_ENV_FILE:-.env}
+  environment: *app-env
+  logging: *logging
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: postgres:16.15-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-krakow_di}
+      POSTGRES_USER: ${POSTGRES_USER:-krakow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?nastavte POSTGRES_PASSWORD v .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging: *logging
+    restart: unless-stopped
+
+  kafka:
+    image: apache/kafka:4.1.0
+    environment:
+      # listenery sa musia zadať výslovne (inak ich obraz odvodí iba z advertised a stratí CONTROLLER)
+      KAFKA_LISTENERS: INTERNAL://:19092,EXTERNAL://:9094,CONTROLLER://:9093
+      # adresa, ktorú broker ohlasuje ostatným tímom: MUSÍ byť verejné meno servera (inak sa
+      # klient pripojí, ale nič nečíta)
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:19092,EXTERNAL://${KAFKA_EXTERNAL_HOST:?nastavte KAFKA_EXTERNAL_HOST}:${KAFKA_EXTERNAL_PORT:-9094}
+      KAFKA_SSL_KEYSTORE_PASSWORD: ${KAFKA_SSL_PASSWORD:-changeit}
+      KAFKA_SSL_KEY_PASSWORD: ${KAFKA_SSL_PASSWORD:-changeit}
+      KAFKA_HEAP_OPTS: ${KAFKA_HEAP_OPTS:--Xms512m -Xmx1g}
+    ports:
+      - "${KAFKA_EXTERNAL_PORT:-9094}:9094"   # jediný verejne dostupný port Kafky (SASL_SSL)
+    volumes:
+      - kafkadata:/var/lib/kafka/data
+      - ./deploy/kafka/server.properties:/mnt/shared/config/server.properties:ro
+      - ./deploy/certs:/certs:ro
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:19092 >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+    logging: *logging
+    restart: unless-stopped
+
+  kafka-init:   # jednorazovo: používateľ `teams` + ACL iba na čítanie
+    image: apache/kafka:4.1.0
+    entrypoint: ["/bin/sh", "/init.sh"]
+    environment:
+      KAFKA_TEAMS_USER: ${KAFKA_TEAMS_USER:-teams}
+      KAFKA_TEAMS_PASSWORD: ${KAFKA_TEAMS_PASSWORD:?nastavte KAFKA_TEAMS_PASSWORD}
+      KAFKA_TOPIC_PREFIX: ${KAFKA_TOPIC_PREFIX:-krakow}
+    volumes:
+      - ./deploy/kafka-init.sh:/init.sh:ro
+    depends_on:
+      kafka: {condition: service_healthy}
+    restart: "no"
+
+  migrate:      # jednorazovo: migrácie DB + topiky
+    <<: *app
+    restart: "no"
+    command: ["sh", "-c", "alembic upgrade head && python tools/create_topics.py"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      kafka: {condition: service_healthy}
+
+  app:          # plánovač: zberače, generátor, publikovanie
+    <<: *app
+    command: ["python", "-m", "krakow_di.scheduler"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      # heartbeat sa zapisuje po každom behu úlohy (generátor každých 5 min)
+      test: ["CMD", "python", "-c", "import os,sys,time; p='/app/data/scheduler.heartbeat'; sys.exit(0 if os.path.exists(p) and time.time()-os.path.getmtime(p) < 1200 else 1)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 180s
+    volumes:
+      - appdata:/app/data
+
+  api:
+    <<: *app
+    command: ["python", "-m", "krakow_di.api", "--host", "0.0.0.0", "--port", "8000"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health', timeout=5).status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  lake:
+    <<: *app
+    command: ["python", "-m", "krakow_di.lake"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    volumes:
+      # zdroje sa dajú meniť bez prebudovania obrazu (pridanie tímu: upraviť YAML a reštartovať lake)
+      - ./config/lake_sources.yaml:/app/config/lake_sources.yaml:ro
+
+  caddy:
+    image: caddy:2
+    environment:
+      API_DOMAIN: ${API_DOMAIN:-:80}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+    depends_on:
+      api: {condition: service_healthy}
+    logging: *logging
+    restart: unless-stopped
+
+  backup:
+    image: postgres:16.15-alpine
+    entrypoint: ["/bin/sh", "/backup.sh"]
+    environment:
+      PGHOST: postgres
+      PGUSER: ${POSTGRES_USER:-krakow}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB:-krakow_di}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+    volumes:
+      - ./deploy/backup.sh:/backup.sh:ro
+      - ./backups:/backups
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    logging: *logging
+    restart: unless-stopped
+
+  kafka-ui:
+    image: kafbat/kafka-ui:v1.4.2
+    profiles: ["tools"]
+    environment:
+      KAFKA_CLUSTERS_0_NAME: krakow
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:19092
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      kafka: {condition: service_healthy}
+
+volumes:
+  pgdata:
+  kafkadata:
+  appdata:
+  caddydata:

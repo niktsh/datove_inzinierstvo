@@ -33,6 +33,13 @@ class Settings(BaseSettings):
     generator_base_rate: float = 0.004
     generator_popularity_sigma: float = 1.0
 
+    # Plánovač (intervaly v hodinách; generátor beží každých generator_tick_seconds)
+    scheduler_travelpayouts_hours: float = 6
+    scheduler_ryanair_hours: float = 12
+    scheduler_theater_programme_hours: float = 24
+    scheduler_theater_snapshots_hours: float = 3
+    scheduler_heartbeat_file: str = "data/scheduler.heartbeat"
+
     producer_id: str = "tuke-di-krakow"
 
     @field_validator("generator_seed", mode="before")

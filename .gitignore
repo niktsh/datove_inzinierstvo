@@ -8,3 +8,5 @@ __pycache__/
 playwright-report/
 data/
 .DS_Store
+deploy/certs/
+backups/

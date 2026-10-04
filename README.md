@@ -36,6 +36,20 @@ uv run python -m krakow_di.collectors.travelpayouts --publish
 uv run python tools/consume.py --from-beginning
 ```
 
+API (REST + SSE + WebSocket; dokumentácia na http://localhost:8000/docs, stream na `/stream`, `/ws`; pre ostatné tímy pozri [docs/PRE_TIMY.md](docs/PRE_TIMY.md)):
+
+```bash
+uv run python -m krakow_di.api --port 8000
+curl -N 'localhost:8000/stream?types=flight.ticket.sold&last_event_id=0&max=5'
+```
+
+Data lake (adaptéry z `config/lake_sources.yaml`; vlastné udalosti sa ukladajú vždy) a štatistika:
+
+```bash
+uv run python -m krakow_di.lake
+uv run python tools/lake_stats.py
+```
+
 Generátor predaja leteniek (simulácia; `--fast` nečaká medzi tikmi, `--speedup X` zrýchľuje čas, `--publish` posiela udalosti do Kafky):
 
 ```bash
@@ -48,5 +62,7 @@ Divadlo (program a snímky dostupnosti, `--limit N` obmedzí počet predstavení
 ```bash
 uv run python -m krakow_di.collectors.slowacki --months 2 --limit 8
 ```
+
+Produkčné nasadenie na server (plánovač, API, data lake, zabezpečená Kafka, HTTPS, zálohy): [docs/NASADENIE.md](docs/NASADENIE.md).
 
 Zastavenie: `docker compose down` (dáta ostanú vo volumes; `-v` ich zmaže).

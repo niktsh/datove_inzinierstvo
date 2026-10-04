@@ -57,6 +57,12 @@ class Generator:
     def _rng(self, *parts: object) -> random.Random:
         return random.Random("|".join([str(self.seed), *map(str, parts)]))
 
+    def _uuid(self, kind: str, offer_id: str, seats_before: int) -> uuid.UUID:
+        """Deterministické a jedinečné id: pre jednu ponuku sa počet voľných miest pred predajom
+        nikdy nezopakuje (miesta len ubúdajú), preto nehrozí kolízia ani po reštarte."""
+        key = f"krakow-di:{self.seed}:{kind}:{offer_id}:{seats_before}"
+        return uuid.uuid5(uuid.NAMESPACE_URL, key)
+
     def popularity(self, offer_id: str) -> float:
         return model.popularity(self._rng("pop", offer_id), self.params.popularity_sigma)
 
@@ -136,7 +142,7 @@ class Generator:
             "ORDER BY o.offer_id",
             (now,),
         ).fetchall()
-        rng = self._rng("tick", iso_utc(now), round(dt_seconds))
+        rng = self._rng("tick", now.isoformat(), round(dt_seconds))
         for o in rows:
             days = (o["departure_at"] - now).total_seconds() / 86400
             p = model.sale_probability(
@@ -155,7 +161,7 @@ class Generator:
         unit = effective_price(o["price"], o["price_markup"])
         total, before = o["seats_total"], o["seats_left"]
         after = before - qty
-        sale_id = uuid.UUID(int=rng.getrandbits(128), version=4)
+        sale_id = self._uuid("sale", o["offer_id"], before)
         conn.execute(
             "INSERT INTO core.ticket_sale (sale_id, offer_id, quantity, unit_price, total_price, "
             "currency, sold_at) VALUES (%s,%s,%s,%s,%s,%s,%s)",
@@ -171,7 +177,7 @@ class Generator:
              "flight_number": o["flight_number"], "quantity": qty, "unit_price": float(unit),
              "total_price": float(unit * qty), "currency": o["currency"],
              "seats_left_after": after, "sold_at": iso_utc(now)},
-            now, self.producer, event_id=uuid.UUID(int=rng.getrandbits(128), version=4)))
+            now, self.producer, event_id=self._uuid("sold", o["offer_id"], before)))
 
         markup = o["price_markup"]
         crossed = model.crossed_thresholds((total - before) / total, (total - after) / total)
@@ -191,13 +197,13 @@ class Generator:
                 {"offer_id": o["offer_id"], "old_price": float(unit),
                  "new_price": float(effective_price(o["price"], markup)),
                  "currency": o["currency"], "reason": "load_factor"},
-                now, self.producer, event_id=uuid.UUID(int=rng.getrandbits(128), version=4)))
+                now, self.producer, event_id=self._uuid("price", o["offer_id"], before)))
         if after == 0:
             result.sold_out += 1
             result.events.append(make_event(
                 "flight.offer.sold_out", "generator",
                 {"offer_id": o["offer_id"], "last_price": float(unit), "currency": o["currency"]},
-                now, self.producer, event_id=uuid.UUID(int=rng.getrandbits(128), version=4)))
+                now, self.producer, event_id=self._uuid("soldout", o["offer_id"], before)))
 
     @staticmethod
     def _history(

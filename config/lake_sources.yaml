@@ -1,0 +1,39 @@
+# Zdroje data lake. Surové správy ukladáme tak, ako prišli (bez normalizácie): lake.message.
+# Hodnoty môžu používať ${PREMENNA} / ${PREMENNA:-predvolená} (prostredie + .env).
+# Prihlasovacie údaje cudzích tímov patria iba do .env a v tomto súbore sa uvádza len názov
+# premennej (username_env / password_env / token_env).
+#
+# Typy: kafka | sse | ws | rest | custom (vlastný adaptér tímu: lake/adapters/team_XX.py)
+# Postup pridania tímu: docs/timy/README.md (príkaz /novy-tim).
+
+sources:
+  # Naše vlastné udalosti (vzor, tiež sa ukladajú do lake): consumer group lake-self.
+  - team: tuke-krakow
+    type: kafka
+    bootstrap: ${KAFKA_BOOTSTRAP_SERVERS:-localhost:9092}
+    topics_regex: '^krakow\..*'
+    group_id: lake-self
+
+  # --- Ukážky pre cudzie tímy (zapnúť po doplnení ich rozhrania) -----------------------------
+  # - team: team_03
+  #   type: kafka
+  #   enabled: false
+  #   bootstrap: kafka.team03.example:9094
+  #   security_protocol: SASL_SSL
+  #   sasl_mechanism: SCRAM-SHA-512
+  #   username_env: TEAM03_KAFKA_USER
+  #   password_env: TEAM03_KAFKA_PASSWORD
+  #   topics: [team03.flights, team03.theater]
+  #   group_id: team-05-lake
+  #
+  # - team: team_04
+  #   type: sse
+  #   enabled: false
+  #   url: https://team04.example/stream
+  #
+  # - team: team_06
+  #   type: rest
+  #   enabled: false
+  #   urls: [https://team06.example/api/v1/offers]
+  #   interval_seconds: 600
+  #   token_env: TEAM06_TOKEN

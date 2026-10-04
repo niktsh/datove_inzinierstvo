@@ -78,31 +78,38 @@ Zafixované verzie: Python 3.12, PostgreSQL `postgres:16.15-alpine`, Kafka `apac
 **Stav:** hotové a overené: 16 testov modelu a enginu (determinizmus, invarianty, prahy cien, `sold_out`/`expired`, zrýchlený čas); simulácia na kópii reálnych dát dala ~2 400 predajov denne (~3 800 miest). Generátor beží aj na pracovnej DB v reálnom čase (`uv run python -m krakow_di.generator --publish`) a jeho udalosti idú do Kafky.
 
 ## Fáza 7 — API a brána streamu
-- [ ] FastAPI: REST pre ponuky, históriu, predaje, divadlo, žurnál udalostí (stránkovanie, filtre)
-- [ ] `GET /stream` (SSE) s filtrom podľa typov a `Last-Event-ID`
-- [ ] `WS /ws`
-- [ ] Stránka `docs/PRE_TIMY.md`: ako sa k nám pripojiť (Kafka, SSE, WS, REST) s príkladmi v Pythone (aiokafka/confluent-kafka), kcat a curl
+- [x] FastAPI: REST pre ponuky, históriu, predaje, divadlo, žurnál udalostí (stránkovanie, filtre)
+- [x] `GET /stream` (SSE) s filtrom podľa typov a `Last-Event-ID`
+- [x] `WS /ws`
+- [x] Stránka `docs/PRE_TIMY.md`: ako sa k nám pripojiť (Kafka, SSE, WS, REST) s príkladmi v Pythone (aiokafka/confluent-kafka), kcat a curl
 
 **Hotové, keď:** iný človek sa podľa samotného `PRE_TIMY.md` pripojí a dostane udalosti.
 
+**Stav:** API, SSE, WebSocket a `PRE_TIMY.md` sú hotové (12 testov API). Príklady z `PRE_TIMY.md` (SSE cez httpx, WebSocket, Kafka cez aiokafka, REST) som overil lokálne. **Neoverené:** pripojenie z cudzieho počítača cez SASL_SSL (príde so serverom, fáza 9), príklady s `kcat` a `confluent-kafka` (nie sú nainštalované).
+
 ## Fáza 8 — Data lake
-- [ ] Writer `lake.message`, spoločné rozhranie adaptéra, runner s reštartom spadnutých adaptérov
-- [ ] `config/lake_sources.yaml`
-- [ ] Adaptér pre vlastné udalosti (ako vzor)
+- [x] Writer `lake.message`, spoločné rozhranie adaptéra, runner s reštartom spadnutých adaptérov
+- [x] `config/lake_sources.yaml`
+- [x] Adaptér pre vlastné udalosti (ako vzor)
 - [ ] Adaptéry pre každý tím podľa toho, ako zverejnia svoje rozhrania (`lake/adapters/team_XX.py` + poznámka `docs/timy/team_XX.md`, čo a ako poskytujú)
-- [ ] Jednoduchý report: koľko správ od ktorého tímu za deň (`tools/lake_stats.py`)
+- [x] Jednoduchý report: koľko správ od ktorého tímu za deň (`tools/lake_stats.py`)
 
 **Hotové, keď:** do lake nepretržite prichádzajú dáta aspoň od 2 cudzích tímov.
 
+**Stav:** infraštruktúra je hotová a otestovaná (15 testov vrátane reálnej Kafky): writer, univerzálne adaptéry `kafka`/`sse`/`ws`/`rest`, `type: custom` pre vlastné adaptéry tímov, runner s reštartom a backoffom, adaptér vlastných udalostí (na pracovnej DB uložených 428 správ bez duplicít), `tools/lake_stats.py`, postup v `docs/timy/README.md`. **Nesplnené:** adaptéry cudzích tímov a kritérium „dáta aspoň od 2 cudzích tímov“, lebo ostatné tímy zatiaľ nezverejnili svoje rozhrania (každý tím si ho navrhuje sám); pridajú sa cez `/novy-tim` alebo záznamom v `config/lake_sources.yaml`.
+
 ## Fáza 9 — Nasadenie
-- [ ] Server (Hron/ÚVT alebo VPS), docker compose v produkcii, reverse proxy + HTTPS pre API
-- [ ] Kafka EXTERNAL listener: SASL_SSL + SCRAM-SHA-512, správne `advertised.listeners`, certifikát
-- [ ] Používateľ `teams` + ACL: READ na topiky `krakow.*` a skupiny `team-*`; overiť, že zápis je zakázaný
-- [ ] Kontrola pripojenia **zvonku** servera (z notebooku): consumer číta od offsetu 0
-- [ ] Plánovač beží 24/7, logy, jednoduchý healthcheck `/health`
-- [ ] Záloha DB raz denne
+- [ ] Server (Hron/ÚVT alebo VPS): **nezískaný** (vyžaduje žiadosť do ÚVT alebo prenájom VPS; text žiadosti a požiadavky sú v `docs/NASADENIE.md`)
+- [x] Docker compose pre produkciu (`docker-compose.prod.yml`, `Dockerfile`), reverse proxy Caddy s automatickým HTTPS (HTTP overené lokálne, HTTPS s verejnou doménou čaká na server)
+- [x] Kafka EXTERNAL listener: SASL_SSL + SCRAM-SHA-512, `advertised.listeners` z `KAFKA_EXTERNAL_HOST`, certifikát (`scripts/gen_kafka_tls.sh`)
+- [x] Používateľ `teams` + ACL: READ na topiky `krakow.*` a skupiny `team-*`; **zápis zakázaný, overené** (`tools/check_external.py`)
+- [ ] Kontrola pripojenia **zvonku** servera (z notebooku): nástroj `tools/check_external.py` je hotový a overený proti lokálnemu zabezpečenému brokeru (4 z 4), na skutočnom serveri ešte nespustený
+- [x] Plánovač 24/7 (`krakow_di.scheduler`, kontajner `app`), logy s rotáciou, healthchecky a `/health`
+- [x] Záloha DB raz denne (`backup`, 14 dní), obnova overená
 
 **Hotové, keď:** systém beží deň bez zásahu.
+
+**Stav:** všetko, čo sa dá urobiť a overiť bez servera, je hotové a otestované lokálne (postup a výsledky: `docs/NASADENIE.md`). **Nesplnené:** získanie servera, kontrola zvonku a kritérium „deň bez zásahu“.
 
 ---
 

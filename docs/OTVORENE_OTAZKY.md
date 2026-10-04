@@ -17,7 +17,7 @@ Formát: otázka → stav → rozhodnutie/kto rozhoduje. Uzavreté otázky nemaz
 - [x] ✅ Mena: letenky pýtame v EUR; divadlo (PLN) sa ukladá v origináli + `price_eur` podľa kurzu ECB v deň snímky (rozhodnutie používateľa: ceny majú byť v eurách)
 - [x] ✅ Parametre generátora: tik 5 minút, `base_rate` 0,004, sigma popularity 1,0 (nastaviteľné cez `.env`). Cieľom je viac ako 10 000 leteniek (viac dát je lepšie), pozri „Odhad objemu“.
 - [x] ✅ **Odhad objemu 10 000** (letenky = predané miesta + ponuky; udalosti osobitne), urobený 2026-10-04 po plnom behu oboch zdrojov; pozri „Odhad objemu“ nižšie. Parametre generátora sa ešte rozhodnú vo fáze 6.
-- [ ] Kde hostujeme
+- [ ] Kde hostujeme: Hron/ÚVT alebo VPS; požiadavky a text žiadosti sú v `docs/NASADENIE.md` (2 vCPU, 4 GB RAM, 50–100 GB, porty 80/443/9094)
 - [x] ✅ Mesto: Kraków (KRK)
 - [x] ✅ Zdroje leteniek: Travelpayouts + Ryanair (Wizz Air zamietnutý: interaktívna kontrola „či ste človek“)
 - [x] ✅ Sledujeme celé divadlo, nie jednu inscenáciu

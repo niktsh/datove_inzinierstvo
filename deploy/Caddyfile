@@ -1,0 +1,9 @@
+# Reverse proxy pred API (REST + SSE + WebSocket). Caddy si pre verejné meno sám zabezpečí HTTPS
+# (Let's Encrypt). API_DOMAIN=:80 znamená iba HTTP (napr. lokálna skúška alebo server bez domény).
+{$API_DOMAIN::80} {
+	encode zstd gzip
+	reverse_proxy api:8000 {
+		# SSE a WebSocket: žiadne zdržiavanie odpovede
+		flush_interval -1
+	}
+}

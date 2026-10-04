@@ -104,7 +104,7 @@ Beží v tikoch (predvolene každých 5 min; existuje režim „zrýchleného č
 Pre tímy, ktorým je Kafka klient nepohodlný:
 - `GET /stream` — **Server-Sent Events**, filter `?types=flight.ticket.sold,theater.*`, podpora `Last-Event-ID` (doťahovanie z `core.event_log`).
 - `WS /ws` — to isté cez WebSocket.
-- Brána číta Kafku ako consumer group `api-gateway` a rozdáva pripojeným klientom.
+- Brána číta Kafku ako consumer group `api-gateway` a rozdáva pripojeným klientom. `id` v SSE je `seq` z `core.event_log`; pri pripojení s `Last-Event-ID` sa najprv dobehne história z `event_log` a potom sa pokračuje živým prúdom bez medzier a duplicít (duplicity sa filtrujú podľa `seq`). Príliš pomalý klient sa odpojí (nahrá sa cez `Last-Event-ID`). Spojenie drží komentár `: keepalive` každých 15 s. Súčasť: `/health` a `/api/v1/stats`.
 - REST (`/api/v1/...`): ponuky, história cien, predaje, predstavenia, snímky divadla, žurnál udalostí so stránkovaním. OpenAPI generuje FastAPI.
 
 ### 5. Data lake (`lake/`)
@@ -117,7 +117,7 @@ Pre tímy, ktorým je Kafka klient nepohodlný:
 - Ak tím poskytuje iba DB/REST, adaptér ho pravidelne dopytuje a ukladá snímky.
 - Ak je iný tím tiež na Kafke, adaptér = bežný consumer s vlastnou consumer group; offset sa commituje **po** zápise do DB (at-least-once; duplicity sú prípustné, odstráni ich warehouse podľa `source_ref`).
 - Vlastné udalosti ukladáme do lake tiež (consumer group `lake-self`).
-- Konfigurácia: `config/lake_sources.yaml`.
+- Konfigurácia: `config/lake_sources.yaml` (typy `kafka`, `sse`, `ws`, `rest`, `custom`; prihlasovacie údaje iba cez `.env`). Runner reštartuje spadnutý adaptér s exponenciálnym backoffom a jeden rozbitý zdroj nezhodí ostatné. Postup pre nový tím: `docs/timy/README.md`; štatistika: `tools/lake_stats.py`.
 
 ## Schéma DB (PostgreSQL)
 
@@ -142,6 +142,7 @@ Pre tímy, ktorým je Kafka klient nepohodlný:
 
 - `docker-compose.yml`: `postgres` (`postgres:16.15-alpine`), `kafka` (`apache/kafka:4.1.0`, KRaft, 1 broker), `kafka-ui` (`kafbat/kafka-ui:v1.4.2`), `app` (scheduler: zberače + generátor + publisher), `api`, `lake`.
 - Python 3.12. Ak divadlo bude potrebovať prehliadač, Playwright sa nainštaluje samostatným image na báze oficiálneho Playwright image pre Python (pre letecké zberače netreba).
+- Produkčný variant: `docker-compose.prod.yml` + `Dockerfile` (služby `postgres`, `kafka`, `kafka-init`, `migrate`, `app` = plánovač, `api`, `lake`, `caddy`, `backup`), postup v `docs/NASADENIE.md`.
 - Cieľ: server s verejnou adresou (Hron/ÚVT alebo VPS). Von: Kafka EXTERNAL listener (SASL_SSL), HTTP API cez reverse proxy s HTTPS. `kafka-ui` von **neotvárať**.
 
 ## Prečo Kafka (zdôvodnenie pre prezentáciu)

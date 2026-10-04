@@ -219,3 +219,18 @@ def test_generator_never_touches_raw_data(conn):
     run_ticks(gen(), conn, 50)
     rows = conn.execute("SELECT source, url, parse_status FROM raw.fetch_log").fetchall()
     assert rows == [{"source": "x", "url": "u", "parse_status": "ok"}]
+
+
+def test_two_ticks_at_the_same_instant_never_collide_on_ids(conn):
+    """Regresia: id predajov sa nesmú opakovať ani pri dvoch tikoch v tej istej sekunde."""
+    seed_offers(conn, n=30, days=(1, 5))
+    g = gen(ModelParams(base_rate=0.5, popularity_sigma=1.0))
+    g.tick(conn, NOW, 0)
+    first = g.tick(conn, NOW + timedelta(minutes=5), 300)
+    again = g.tick(conn, NOW + timedelta(minutes=5), 300)  # rovnaký okamih
+    assert first.sales > 0 and again.sales > 0
+    ids = [e["event_id"] for e in first.events + again.events]
+    assert len(ids) == len(set(ids))
+    sale_ids = [e["data"]["sale_id"] for e in first.events + again.events
+                if e["event_type"] == "flight.ticket.sold"]
+    assert len(sale_ids) == len(set(sale_ids))
