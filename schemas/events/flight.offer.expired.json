@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://krakow-di.local/schemas/events/flight.offer.expired.json",
+  "title": "flight.offer.expired",
+  "description": "Ponuka vypršala",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "const": "flight.offer.expired"
+    },
+    "event_version": {
+      "const": 1
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "enum": [
+        "generator",
+        "travelpayouts",
+        "ryanair"
+      ]
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "offer_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$"
+        },
+        "reason": {
+          "enum": [
+            "departed",
+            "not_found_at_source"
+          ]
+        }
+      },
+      "required": [
+        "offer_id",
+        "reason"
+      ]
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "occurred_at",
+    "producer",
+    "source",
+    "data"
+  ]
+}

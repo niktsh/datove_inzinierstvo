@@ -27,6 +27,15 @@ uv run python -m krakow_di.collectors.travelpayouts
 uv run python -m krakow_di.collectors.ryanair --days 4   # bez --days: celý horizont, ~30 min
 ```
 
+Kafka: vytvorenie topikov, odoslanie udalostí zo zberu (`--publish` je pri každom zberači) a kontrolný consumer
+(overuje JSON Schema, hlavičky, kľúče a poradie):
+
+```bash
+uv run python tools/create_topics.py
+uv run python -m krakow_di.collectors.travelpayouts --publish
+uv run python tools/consume.py --from-beginning
+```
+
 Divadlo (program a snímky dostupnosti, `--limit N` obmedzí počet predstavení):
 
 ```bash

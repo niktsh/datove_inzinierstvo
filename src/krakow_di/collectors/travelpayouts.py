@@ -154,12 +154,19 @@ class TravelpayoutsCollector:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Jedenkrát spustí zberač Travelpayouts")
     parser.add_argument("--routes", default="config/routes.yaml")
+    parser.add_argument("--publish", action="store_true", help="odoslať udalosti do Kafky")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     logging.getLogger("httpx").setLevel(logging.WARNING)
     collector = TravelpayoutsCollector(get_settings(), load_routes(args.routes))
     with connect() as conn:
         summary = collector.run(conn)
+        if args.publish:
+            from krakow_di.events.builders import offer_events
+            from krakow_di.events.publisher import publish_events
+
+            events = offer_events(conn, summary.changes, get_settings().producer_id)
+            print("udalosti (uložené, odoslané):", publish_events(conn, events))
     print(
         f"requests={summary.requests} errors={summary.errors} empty={summary.empty} "
         f"changes={summary.counts()}"

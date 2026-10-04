@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://krakow-di.local/schemas/events/theater.tickets.sold.json",
+  "title": "theater.tickets.sold",
+  "description": "Reálny predaj zistený z rozdielu snímok",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "const": "theater.tickets.sold"
+    },
+    "event_version": {
+      "const": 1
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "enum": [
+        "theater"
+      ]
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "performance_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "integer",
+          "not": {
+            "const": 0
+          },
+          "description": "záporné = vrátenie"
+        },
+        "unit_price": {
+          "type": "number",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "unit_price_eur": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fx_rate": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "detected_between": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "required": [
+        "performance_id",
+        "category",
+        "quantity",
+        "unit_price",
+        "currency",
+        "unit_price_eur",
+        "fx_rate",
+        "detected_between"
+      ]
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "occurred_at",
+    "producer",
+    "source",
+    "data"
+  ]
+}

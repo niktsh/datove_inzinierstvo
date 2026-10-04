@@ -52,17 +52,19 @@ Zafixované verzie: Python 3.12, PostgreSQL `postgres:16.15-alpine`, Kafka `apac
 
 **Hotové, keď:** za deň prevádzky vidno snímky a aspoň jeden zistený reálny predaj.
 
-**Stav:** kód, testy (65 prechádza) a reálne spustenie sú hotové (70 predstavení, 8 snímok, 0 chýb). **Kritérium „za deň“ ešte nie je overené**: treba denný beh s opakovanými snímkami; dovtedy nie je zaznamenaný žiadny reálny predaj.
+**Stav:** kód, testy a reálne spustenie sú hotové. Počas niekoľkých hodín opakovaných snímok boli zistené 3 predaje (Wielki Gatsby 3 + 2 miesta, O!peretka 2 miesta); posledný z nich sa o 3 minúty vrátil (držanie v košíku). **Kritérium „za deň“ je splnené na úrovni „aspoň jeden reálny predaj“, plný 24-hodinový nepretržitý beh sa neoveroval** (plánovač príde vo fáze 9).
 
 ## Fáza 5 — Kafka publisher a kontrakt
-- [ ] JSON Schema v `schemas/events/` pre všetky typy z `UDALOSTI.md`
-- [ ] `tools/create_topics.py`: topiky z `ARCHITEKTURA.md` s partíciami a `retention.ms=-1` (idempotentne)
-- [ ] Envelope, validácia, producer na aiokafka (`acks=all`, idempotencia, kľúč = id entity, hlavička `event_type`), zápis do `core.event_log`
-- [ ] Zberače publikujú `offer.found` / `offer.observed` / `price_changed` / divadelné udalosti
-- [ ] `docs/asyncapi.yaml` (protokol kafka): topiky, kľúče, hlavičky, správy
-- [ ] Testovací consumer `tools/consume.py` (výber topikov, `--from-beginning`)
+- [x] JSON Schema v `schemas/events/` pre všetky typy z `UDALOSTI.md`
+- [x] `tools/create_topics.py`: topiky z `ARCHITEKTURA.md` s partíciami a `retention.ms=-1` (idempotentne)
+- [x] Envelope, validácia, producer na aiokafka (`acks=all`, idempotencia, kľúč = id entity, hlavička `event_type`), zápis do `core.event_log`
+- [x] Zberače publikujú `offer.found` / `offer.observed` / `price_changed` / divadelné udalosti
+- [x] `docs/asyncapi.yaml` (protokol kafka): topiky, kľúče, hlavičky, správy
+- [x] Testovací consumer `tools/consume.py` (výber topikov, `--from-beginning`)
 
 **Hotové, keď:** `tools/consume.py --from-beginning` vidí všetky typy udalostí s platnými schémami a udalosti jedného `offer_id` idú v poradí.
+
+**Stav:** hotové a overené na reálnej Kafke (370 správ, 0 neplatných, 0 porušení poradia; 5 z 10 typov udalostí: `found`, `observed`, `price_changed`, `availability.snapshot`, `tickets.sold`). Typy `flight.ticket.sold`, `sold_out`, `expired` vzniknú až s generátorom (fáza 6); `theater.performance.*` sa publikujú pri behu s `--publish`, keď sa program zmení.
 
 ## Fáza 6 — Generátor predaja
 - [ ] Model z `ARCHITEKTURA.md` (kapacita, pravdepodobnosť predaja, 1–3 miesta, dynamická cena)

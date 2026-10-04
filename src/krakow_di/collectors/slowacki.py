@@ -153,6 +153,17 @@ def detect_sales(
     return out
 
 
+@dataclass(frozen=True)
+class SnapshotRecord:
+    """Snímka dostupnosti jedného predstavenia (pre publikovanie udalosti)."""
+
+    performance_id: str
+    observed_at: datetime
+    categories: list[CategorySeats]
+    fx_rate: Decimal | None
+    eur_prices: dict[tuple[str, Decimal], Decimal | None]
+
+
 @dataclass
 class TheaterRun:
     requests: int = 0
@@ -161,7 +172,7 @@ class TheaterRun:
     found: list[Performance] = field(default_factory=list)
     updated: list[Performance] = field(default_factory=list)
     skipped_blocks: int = 0
-    snapshots: list[tuple[str, datetime, list[CategorySeats]]] = field(default_factory=list)
+    snapshots: list[SnapshotRecord] = field(default_factory=list)
     sales: list[Sale] = field(default_factory=list)
 
 
@@ -340,7 +351,7 @@ class SlowackiCollector:
         eur = {(c.name, c.price): to_eur(c.price, rate) if rate else None for c in cats}
         previous = repo.previous_snapshot(conn, pid)
         repo.insert_snapshot(conn, pid, now, cats, CURRENCY, rate, eur)
-        run.snapshots.append((pid, now, cats))
+        run.snapshots.append(SnapshotRecord(pid, now, cats, rate, eur))
         if previous is None:
             return  # prvá snímka je iba základ
         prev_at, prev_cats = previous
@@ -371,6 +382,7 @@ def main() -> None:
     parser.add_argument("--snapshot-only", action="store_true")
     parser.add_argument("--limit", type=int, help="nasníma najviac N predstavení")
     parser.add_argument("--months", type=int, default=6)
+    parser.add_argument("--publish", action="store_true", help="odoslať udalosti do Kafky")
     args = parser.parse_args()
     get_settings()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -386,6 +398,13 @@ def main() -> None:
         f"found={len(run.found)} updated={len(run.updated)} skipped_blocks={run.skipped_blocks} "
         f"snapshots={len(run.snapshots)} sales={len(run.sales)}"
     )
+    if args.publish:
+        from krakow_di.events.builders import theater_events
+        from krakow_di.events.publisher import publish_events
+
+        with connect() as conn:
+            events = theater_events(run, get_settings().producer_id, datetime.now(UTC))
+            print("udalosti (uložené, odoslané):", publish_events(conn, events))
     for s in run.sales:
         print(
             f"  predaj {s.performance_id} {s.category}: "

@@ -52,5 +52,6 @@ Formát: otázka → stav → rozhodnutie/kto rozhoduje. Uzavreté otázky nemaz
   - Vypredané predstavenia sú v programe zobrazené bez odkazu na pokladňu („Bilety do teatru wyprzedane“); ukladáme ich ako `sold_out` (zo 70 nájdených je 24 vypredaných).
   - Preskakujeme: cudzie podujatia (vstupenky na inom webe, napr. goingapp.pl) a uzavreté predstavenia („Spektakl zarezerwowany“): dostupnosť miest u nich nie je vidno. Je to vedomé rozhodnutie.
   - Košík kupujúceho: miesto v košíku vyzerá ako predané, potom ako vrátené (`quantity < 0`). Nefiltrujeme to, lebo pri intervale 2–6 hodín sa to dostane do snímky zriedka; vrátenia sú v udalosti výslovne povolené.
+  - Potvrdené v praxi: predaj 2 miest (O!peretka) sa po 3 minútach vrátil (−2), teda išlo o držanie v košíku; predaje na Wielki Gatsby ostali. Pri rozostupe snímok 2–6 h by sa to malo diať zriedka; ak nie, pridáme potvrdenie dvoma snímkami za sebou.
   - Do `raw.fetch_log` sa mapa sály neukladá celá (≈100 KB na udalosť, ≈100 MB denne), iba súhrn: id, počet miest, legenda.
   - Plný prechod: ≈ 70 predstavení na 2 mesiace, ≈ 250 na 6 mesiacov; jeden prechod snímok ≈ 6–8 minút pri pauze 1,5 s.

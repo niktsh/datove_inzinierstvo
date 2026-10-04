@@ -89,7 +89,7 @@ Beží v tikoch (predvolene každých 5 min; existuje režim „zrýchleného č
 - Formát hodnoty: JSON (UTF-8) s envelope z `UDALOSTI.md`, pred odoslaním kontrola podľa JSON Schema zo `schemas/events/`.
 - Producer: knižnica **aiokafka**, `acks=all`, `enable_idempotence=True`, kompresia `gzip`.
 - Topiky sa vytvárajú kódom pri štarte (`tools/create_topics.py`), nie automatickým vytváraním brokerom (`auto.create.topics.enable=false`).
-- Outbox a Schema Registry **nerobíme** (rozhodnutie: pre projekt je to zbytočné). Publikovanie: zápis do `core.event_log`, potom odoslanie do Kafky; súbory JSON Schema sú v repozitári.
+- Outbox a Schema Registry **nerobíme** (rozhodnutie: pre projekt je to zbytočné). Publikovanie: validácia podľa JSON Schema, zápis do `core.event_log` (`published_at = NULL`), potom odoslanie do Kafky v poradí `seq`; po potvrdení brokerom sa nastaví `published_at`. Ak Kafka nie je dostupná, udalosti zostanú v `event_log` a odošlú sa pri ďalšom behu (minimálna poistka, nie plný outbox). Súbory JSON Schema sú v repozitári (`schemas/events/`), kontrakt je aj v `docs/asyncapi.yaml`.
 - **Zálohu Kafky netreba osobitne:** vlastné udalosti sú v `core.event_log` a udalosti iných tímov v `lake.message`. Denná záloha DB pokrýva všetko; pri strate zväzku Kafky sa história dá znova vydať z `core.event_log`.
 
 **Prístup pre ostatné tímy:**
@@ -130,7 +130,7 @@ Pre tímy, ktorým je Kafka klient nepohodlný:
 - `core.theater_snapshot(id, performance_id, observed_at, category, price, currency, seats_available, price_eur NULL, fx_rate NULL)`
 - `core.theater_sale(sale_id PK, performance_id, category, quantity, unit_price, currency, unit_price_eur NULL, fx_rate NULL, detected_from, detected_to)` — `quantity < 0` = vrátenie
 - `core.fx_rate(rate_date, currency, per_eur, fetched_at)` — kurzy ECB (1 EUR = N jednotiek meny), aktualizujú sa raz denne podľa potreby
-- `core.event_log(event_id PK, event_type, topic, occurred_at, payload jsonb)` — všetko publikované (pre REST a `Last-Event-ID`)
+- `core.event_log(event_id PK, seq, event_type, topic, occurred_at, payload jsonb, published_at NULL)` — všetko publikované (pre REST a `Last-Event-ID`); `seq` určuje poradie odoslania, `published_at IS NULL` = ešte neodoslané
 
 **`lake`** — dáta iných tímov: `lake.message` ako vyššie; indexy podľa `(team, received_at)` a jedinečnosť podľa `(team, source_ref)`, kde je to možné.
 

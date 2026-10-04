@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://krakow-di.local/schemas/events/flight.ticket.sold.json",
+  "title": "flight.ticket.sold",
+  "description": "Predaj letenky (simulovaný generátorom)",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "const": "flight.ticket.sold"
+    },
+    "event_version": {
+      "const": 1
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "enum": [
+        "generator"
+      ]
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "sale_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "offer_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$"
+        },
+        "origin_iata": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "destination_iata": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "departure_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "airline_iata": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 3
+        },
+        "flight_number": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "unit_price": {
+          "type": "number",
+          "minimum": 0
+        },
+        "total_price": {
+          "type": "number",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "seats_left_after": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sold_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "sale_id",
+        "offer_id",
+        "origin_iata",
+        "destination_iata",
+        "departure_at",
+        "airline_iata",
+        "flight_number",
+        "quantity",
+        "unit_price",
+        "total_price",
+        "currency",
+        "seats_left_after",
+        "sold_at"
+      ]
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "occurred_at",
+    "producer",
+    "source",
+    "data"
+  ]
+}

@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://krakow-di.local/schemas/events/flight.offer.observed.json",
+  "title": "flight.offer.observed",
+  "description": "Opakovaný zber už známej ponuky",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "const": "flight.offer.observed"
+    },
+    "event_version": {
+      "const": 1
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "enum": [
+        "travelpayouts",
+        "ryanair"
+      ]
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "offer_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$"
+        },
+        "origin_iata": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "destination_iata": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "departure_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "arrival_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "airline_iata": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 3
+        },
+        "flight_number": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stops": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "price": {
+          "type": "number",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "seats_total": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "seats_left": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "seats_simulated": {
+          "type": "boolean"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "offer_id",
+        "origin_iata",
+        "destination_iata",
+        "departure_at",
+        "arrival_at",
+        "airline_iata",
+        "flight_number",
+        "stops",
+        "price",
+        "currency",
+        "seats_total",
+        "seats_left",
+        "seats_simulated",
+        "observed_at"
+      ],
+      "description": "Ponuka letenky. seats_* sú simulované generátorom (seats_simulated) a do jeho spustenia môžu byť null."
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "occurred_at",
+    "producer",
+    "source",
+    "data"
+  ]
+}

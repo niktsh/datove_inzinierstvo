@@ -45,6 +45,8 @@ Ceny v zlotých (`PLN`), desatinná čiarka.
 Zníženie počtu voľných miest medzi snímkami = predaj (`theater.tickets.sold`, `quantity = rozdiel`), zvýšenie = vrátenie (záporné množstvo).
 Obmedzenie: miesto v košíku kupujúceho na istý čas zrejme tiež vyzerá ako „bez `sale`“ (v kóde stránky sa dôvod nedostupnosti miesta volá „w koszyku“; dĺžka držania nebola overená), preto rýchle výkyvy dajú falošný predaj a potom vrátenie. Rozhodnutie (implementované): rozdiel počítame tak, ako je, vrátenie dáva záporné množstvo (v `UDALOSTI.md` je to výslovne povolené); pri intervale 2–6 hodín sa držanie v košíku dostane do snímky zriedka. Prvá snímka predstavenia je iba základná. Ak v praxi uvidíme veľa falošných dvojíc „predaj/vrátenie“, pridáme potvrdenie dvoma snímkami za sebou.
 
+**Potvrdené v praxi (2026-10-04):** pri snímkach s rozostupom pár minút sa objavil predaj 2 miest (O!peretka, 14:14:26), ktorý sa o 3 minúty vrátil (−2 miesta, 14:17:25), teda išlo o držanie v košíku. Naopak predaje 3 a 2 miest na Wielki Gatsby (4. a 5. 11.) sa nevrátili. Pri bežnom intervale 2–6 hodín sa takéto krátke držanie do snímky dostane zriedka.
+
 ## Obmedzenia a riziká
 - Neoficiálne rozhranie (to isté, ktoré používa web): môže sa zmeniť. Parsujeme striktne, surové dáta ukladáme do `raw.fetch_log`.
 - `robots.txt` pokladne nič nezakazuje (`Disallow:` je prázdny, riadky sú zakomentované); hlavný web na `/robots.txt` vracia HTML stránku. Záťaž držíme malú.

@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://krakow-di.local/schemas/events/flight.offer.price_changed.json",
+  "title": "flight.offer.price_changed",
+  "description": "Zmena ceny ponuky",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "const": "flight.offer.price_changed"
+    },
+    "event_version": {
+      "const": 1
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "enum": [
+        "travelpayouts",
+        "ryanair",
+        "generator"
+      ]
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "offer_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$"
+        },
+        "old_price": {
+          "type": "number",
+          "minimum": 0
+        },
+        "new_price": {
+          "type": "number",
+          "minimum": 0
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "reason": {
+          "enum": [
+            "load_factor",
+            "scrape"
+          ]
+        }
+      },
+      "required": [
+        "offer_id",
+        "old_price",
+        "new_price",
+        "currency",
+        "reason"
+      ]
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "occurred_at",
+    "producer",
+    "source",
+    "data"
+  ]
+}

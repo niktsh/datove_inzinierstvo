@@ -1,0 +1,249 @@
+# AsyncAPI kontrakt Kafka rozhrania Kraków DI (náš verejný kontrakt, pozri docs/UDALOSTI.md).
+# Každú zmenu synchronizovať s schemas/events/*.json a docs/UDALOSTI.md.
+asyncapi: 3.0.0
+info:
+  title: Kraków DI, udalosti o letenkách a divadle
+  version: 1.0.0
+  description: >-
+    Streamované udalosti zo zberačov (Travelpayouts, Ryanair, Teatr im. J. Słowackiego)
+    a z generátora predaja leteniek. Správa je JSON (UTF-8) s envelope; kľúč správy je id
+    entity, hlavička `event_type` duplikuje typ udalosti. Retencia je neobmedzená, históriu
+    je možné čítať od offsetu 0.
+servers:
+  local:
+    host: localhost:9092
+    protocol: kafka
+    description: Lokálny vývojový broker (PLAINTEXT, bez autentifikácie).
+  external:
+    host: 'doplní-sa-pri-nasadení:9094'  # fáza 9
+    protocol: kafka-secure
+    description: Externý listener pre ostatné tímy (SASL_SSL, SCRAM-SHA-512, používateľ iba na čítanie, consumer group musí začínať `team-`).
+channels:
+  flights_offers:
+    address: krakow.flights.offers
+    description: Partícií 3, kľúč správy `offer_id` (všetky udalosti jednej entity idú v poradí).
+    messages:
+      flight.offer.found:
+        $ref: '#/components/messages/flight.offer.found'
+      flight.offer.observed:
+        $ref: '#/components/messages/flight.offer.observed'
+      flight.offer.price_changed:
+        $ref: '#/components/messages/flight.offer.price_changed'
+      flight.offer.sold_out:
+        $ref: '#/components/messages/flight.offer.sold_out'
+      flight.offer.expired:
+        $ref: '#/components/messages/flight.offer.expired'
+  flights_sales:
+    address: krakow.flights.sales
+    description: Partícií 3, kľúč správy `offer_id` (všetky udalosti jednej entity idú v poradí).
+    messages:
+      flight.ticket.sold:
+        $ref: '#/components/messages/flight.ticket.sold'
+  theater_performances:
+    address: krakow.theater.performances
+    description: Partícií 1, kľúč správy `performance_id` (všetky udalosti jednej entity idú v poradí).
+    messages:
+      theater.performance.found:
+        $ref: '#/components/messages/theater.performance.found'
+      theater.performance.updated:
+        $ref: '#/components/messages/theater.performance.updated'
+  theater_availability:
+    address: krakow.theater.availability
+    description: Partícií 1, kľúč správy `performance_id` (všetky udalosti jednej entity idú v poradí).
+    messages:
+      theater.availability.snapshot:
+        $ref: '#/components/messages/theater.availability.snapshot'
+  theater_sales:
+    address: krakow.theater.sales
+    description: Partícií 1, kľúč správy `performance_id` (všetky udalosti jednej entity idú v poradí).
+    messages:
+      theater.tickets.sold:
+        $ref: '#/components/messages/theater.tickets.sold'
+operations:
+  publish_flights_offers:
+    action: send
+    channel:
+      $ref: '#/channels/flights_offers'
+    summary: Náš systém publikuje udalosti do topiku krakow.flights.offers.
+  publish_flights_sales:
+    action: send
+    channel:
+      $ref: '#/channels/flights_sales'
+    summary: Náš systém publikuje udalosti do topiku krakow.flights.sales.
+  publish_theater_performances:
+    action: send
+    channel:
+      $ref: '#/channels/theater_performances'
+    summary: Náš systém publikuje udalosti do topiku krakow.theater.performances.
+  publish_theater_availability:
+    action: send
+    channel:
+      $ref: '#/channels/theater_availability'
+    summary: Náš systém publikuje udalosti do topiku krakow.theater.availability.
+  publish_theater_sales:
+    action: send
+    channel:
+      $ref: '#/channels/theater_sales'
+    summary: Náš systém publikuje udalosti do topiku krakow.theater.sales.
+components:
+  messages:
+    flight.offer.found:
+      name: flight.offer.found
+      contentType: application/json
+      headers:
+        type: object
+        properties:
+          event_type:
+            type: string
+            const: flight.offer.found
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'offer_id'
+      payload:
+        $ref: '../schemas/events/flight.offer.found.json'
+    flight.offer.observed:
+      name: flight.offer.observed
+      contentType: application/json
+      headers:
+        type: object
+        properties:
+          event_type:
+            type: string
+            const: flight.offer.observed
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'offer_id'
+      payload:
+        $ref: '../schemas/events/flight.offer.observed.json'
+    flight.offer.price_changed:
+      name: flight.offer.price_changed
+      contentType: application/json
+      headers:
+        type: object
+        properties:
+          event_type:
+            type: string
+            const: flight.offer.price_changed
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'offer_id'
+      payload:
+        $ref: '../schemas/events/flight.offer.price_changed.json'
+    flight.offer.sold_out:
+      name: flight.offer.sold_out
+      contentType: application/json
+      headers:
+        type: object
+        properties:
+          event_type:
+            type: string
+            const: flight.offer.sold_out
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'offer_id'
+      payload:
+        $ref: '../schemas/events/flight.offer.sold_out.json'
+    flight.offer.expired:
+      name: flight.offer.expired
+      contentType: application/json
+      headers:
+        type: object
+        properties:
+          event_type:
+            type: string
+            const: flight.offer.expired
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'offer_id'
+      payload:
+        $ref: '../schemas/events/flight.offer.expired.json'
+    flight.ticket.sold:
+      name: flight.ticket.sold
+      contentType: application/json
+      headers:
+        type: object
+        properties:
+          event_type:
+            type: string
+            const: flight.ticket.sold
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'offer_id'
+      payload:
+        $ref: '../schemas/events/flight.ticket.sold.json'
+    theater.performance.found:
+      name: theater.performance.found
+      contentType: application/json
+      headers:
+        type: object
+        properties:
+          event_type:
+            type: string
+            const: theater.performance.found
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'performance_id'
+      payload:
+        $ref: '../schemas/events/theater.performance.found.json'
+    theater.performance.updated:
+      name: theater.performance.updated
+      contentType: application/json
+      headers:
+        type: object
+        properties:
+          event_type:
+            type: string
+            const: theater.performance.updated
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'performance_id'
+      payload:
+        $ref: '../schemas/events/theater.performance.updated.json'
+    theater.availability.snapshot:
+      name: theater.availability.snapshot
+      contentType: application/json
+      headers:
+        type: object
+        properties:
+          event_type:
+            type: string
+            const: theater.availability.snapshot
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'performance_id'
+      payload:
+        $ref: '../schemas/events/theater.availability.snapshot.json'
+    theater.tickets.sold:
+      name: theater.tickets.sold
+      contentType: application/json
+      headers:
+        type: object
+        properties:
+          event_type:
+            type: string
+            const: theater.tickets.sold
+      bindings:
+        kafka:
+          key:
+            type: string
+            description: 'performance_id'
+      payload:
+        $ref: '../schemas/events/theater.tickets.sold.json'

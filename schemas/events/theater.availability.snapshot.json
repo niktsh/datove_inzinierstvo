@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://krakow-di.local/schemas/events/theater.availability.snapshot.json",
+  "title": "theater.availability.snapshot",
+  "description": "Reálna snímka dostupnosti miest",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "const": "theater.availability.snapshot"
+    },
+    "event_version": {
+      "const": 1
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "enum": [
+        "theater"
+      ]
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "performance_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "fx_rate": {
+          "anyOf": [
+            {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "type": "string"
+              },
+              "price": {
+                "type": "number",
+                "minimum": 0
+              },
+              "currency": {
+                "type": "string",
+                "pattern": "^[A-Z]{3}$"
+              },
+              "price_eur": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "seats_available": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "category",
+              "price",
+              "currency",
+              "price_eur",
+              "seats_available"
+            ]
+          }
+        },
+        "seats_available_total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "performance_id",
+        "observed_at",
+        "fx_rate",
+        "categories",
+        "seats_available_total"
+      ]
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "occurred_at",
+    "producer",
+    "source",
+    "data"
+  ]
+}

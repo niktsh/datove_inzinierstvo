@@ -247,6 +247,7 @@ class RyanairCollector:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Jedenkrát spustí zberač Ryanairu")
     parser.add_argument("--config", default="config/routes_ryanair.yaml")
+    parser.add_argument("--publish", action="store_true", help="odoslať udalosti do Kafky")
     parser.add_argument("--origins", help="podmnožina oddelená čiarkou, napr. BCN,VIE")
     parser.add_argument("--days", type=int, help="prepíše horizon_days (na rýchle kontroly)")
     args = parser.parse_args()
@@ -256,6 +257,13 @@ def main() -> None:
     origins = tuple(args.origins.upper().split(",")) if args.origins else None
     with connect() as conn:
         summary = collector.run(conn, origins, args.days)
+        if args.publish:
+            from krakow_di.config import get_settings
+            from krakow_di.events.builders import offer_events
+            from krakow_di.events.publisher import publish_events
+
+            events = offer_events(conn, summary.changes, get_settings().producer_id)
+            print("udalosti (uložené, odoslané):", publish_events(conn, events))
     print(
         f"requests={summary.requests} errors={summary.errors} empty={summary.empty} "
         f"aborted={summary.aborted} changes={summary.counts()}"

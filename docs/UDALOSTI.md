@@ -49,7 +49,7 @@ Transport: **Apache Kafka**. Hodnota správy je JSON (UTF-8) s envelope nižšie
   "observed_at": "2026-10-14T06:00:12Z"
 }
 ```
-`flight_number` môže byť `null` (Travelpayouts ho nie vždy poskytuje). `seats_*` sú vždy simulované generátorom, čo je férovo označené poľom `seats_simulated`.
+`flight_number` môže byť `null` (Travelpayouts ho nie vždy poskytuje). `seats_*` sú vždy simulované generátorom, čo je férovo označené poľom `seats_simulated`; kým generátor ponuke nepriradí kapacitu (fáza 6), sú `seats_total` a `seats_left` `null`.
 
 ### `flight.offer.observed` — opakovaný zber už známej ponuky
 Rovnaké `data` ako pri `offer.found`. Posiela sa pri každom zbere, aj keď sa nič nezmenilo (pre históriu v data lake).
