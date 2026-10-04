@@ -1,104 +1,106 @@
-# План реализации
+# Plán implementácie
 
-Работаем по фазам по порядку, один исполнитель. В конце каждой фазы — проверить критерии и отметить `[x]`.
-Фазы 2–4 (сборщики) делаем последовательно.
-Цель — только работающее решение (презентации нет).
+Pracujeme po fázach v poradí, jeden riešiteľ. Na konci každej fázy skontrolovať kritériá a označiť `[x]`.
+Fázy 2–4 (zberače) robíme postupne.
+Cieľ je iba fungujúce riešenie (prezentácia nie je).
 
-Фиксированные версии: Python 3.12, PostgreSQL `postgres:16.15-alpine`, Kafka `apache/kafka:4.1.0`, `kafbat/kafka-ui:v1.4.2`.
+Zafixované verzie: Python 3.12, PostgreSQL `postgres:16.15-alpine`, Kafka `apache/kafka:4.1.0`, `kafbat/kafka-ui:v1.4.2`.
 
 ---
 
-## Фаза 0 — Каркас проекта
-- [x] `uv init`, `pyproject.toml` (Python 3.12), пакет `src/krakow_di`, ruff + pytest настроены
-- [x] `config.py` на pydantic-settings, `.env.example` актуален
-- [x] `docker-compose.yml`: postgres 16.15, kafka 4.1.0 (KRaft, 1 брокер, `auto.create.topics.enable=false`), kafka-ui, healthchecks, volumes
-- [x] `README.md`: как запустить с нуля за 5 минут
-- [x] Пустой тест проходит, `ruff check` чистый
+## Fáza 0 — Kostra projektu
+- [x] `uv init`, `pyproject.toml` (Python 3.12), balík `src/krakow_di`, nastavené ruff + pytest
+- [x] `config.py` na pydantic-settings, `.env.example` aktuálny
+- [x] `docker-compose.yml`: postgres 16.15, kafka 4.1.0 (KRaft, 1 broker, `auto.create.topics.enable=false`), kafka-ui, healthchecky, volumes
+- [x] `README.md`: ako spustiť od nuly za 5 minút
+- [x] Prázdny test prejde, `ruff check` je čistý
 
-**Готово, когда:** `docker compose up -d && uv run pytest` работает на чистой машине.
+**Hotové, keď:** `docker compose up -d && uv run pytest` funguje na čistom stroji.
 
-## Фаза 1 — База данных
-- [x] Alembic, схемы `raw`, `core`, `lake` и таблицы из `ARCHITEKTURA.md`
-- [x] Функция генерации детерминированного `offer_id` (`source + origin + destination + departure_at до минуты + airline_iata`, без `flight_number`/`fare_key`) + тест
-- [x] Репозиторий/функции upsert для `flight_offer` с записью в `flight_offer_history`
+## Fáza 1 — Databáza
+- [x] Alembic, schémy `raw`, `core`, `lake` a tabuľky z `ARCHITEKTURA.md`
+- [x] Funkcia generovania deterministického `offer_id` (`source + origin + destination + departure_at s presnosťou na minútu + airline_iata`, bez `flight_number`/`fare_key`) + test
+- [x] Repozitár/funkcie upsert pre `flight_offer` so zápisom do `flight_offer_history`
 
-**Готово, когда:** миграции поднимаются и откатываются; тест upsert проходит на реальной БД из docker compose (без testcontainers).
+**Hotové, keď:** migrácie sa dajú nasadiť aj vrátiť; test upsertu prejde na reálnej DB z docker compose (bez testcontainers).
 
-## Фаза 2 — Сборщик Travelpayouts
-- [x] Регистрация, токен в `.env` (`TRAVELPAYOUTS_TOKEN`)
-- [x] `config/routes.yaml`: ≥10 аэропортов отправления → KRK
-- [x] Записать реальные ответы в `tests/fixtures/travelpayouts/`
-- [x] fetch → `raw.fetch_log` → parse → upsert, обработка пустых ответов и лимитов
-- [x] Проверить, по каким маршрутам кэш реально даёт данные; записать вывод в `OTVORENE_OTAZKY.md`
+## Fáza 2 — Zberač Travelpayouts
+- [x] Registrácia, token v `.env` (`TRAVELPAYOUTS_TOKEN`)
+- [x] `config/routes.yaml`: ≥10 letísk odletu → KRK
+- [x] Zapísať reálne odpovede do `tests/fixtures/travelpayouts/`
+- [x] fetch → `raw.fetch_log` → parse → upsert, ošetrenie prázdnych odpovedí a limitov
+- [x] Overiť, na ktorých trasách cache reálne dáva dáta; záver zapísať do `OTVORENE_OTAZKY.md`
 
-**Готово, когда:** один запуск наполняет `core.flight_offer` реальными предложениями по ≥5 маршрутам.
+**Hotové, keď:** jedno spustenie naplní `core.flight_offer` reálnymi ponukami na ≥5 trasách.
 
-## Фаза 3 — Сборщик Ryanair (вместо Wizz Air)
-- [x] **Spike (сначала!)**: Wizz Air закрыт проверкой на человека (`docs/zdroje/wizzair.md`), заменён на Ryanair; найден открытый Fare Finder API, фикстуры в `tests/fixtures/ryanair/`, описание в `docs/zdroje/ryanair.md`
-- [x] Список маршрутов Ryanair в KRK из их официального списка (`config/routes_ryanair.yaml`: кандидаты ∩ маршруты Ryanair)
-- [x] Сборщик с паузами, ретраями, backoff, обходом дат горизонта и остановкой при серии ошибок
-- [x] Парсер покрыт тестами на фикстурах
+## Fáza 3 — Zberač Ryanair (namiesto Wizz Air)
+- [x] **Spike (najprv!)**: Wizz Air je chránený kontrolou „či ste človek“ (`docs/zdroje/wizzair.md`), nahradený Ryanairom; nájdené otvorené Fare Finder API, fixtures v `tests/fixtures/ryanair/`, popis v `docs/zdroje/ryanair.md`
+- [x] Zoznam trás Ryanairu do KRK z ich oficiálneho zoznamu (`config/routes_ryanair.yaml`: kandidáti ∩ trasy Ryanairu)
+- [x] Zberač s pauzami, opakovaniami, backoffom, prechodom dátumov horizontu a zastavením pri sérii chýb
+- [x] Parser pokrytý testami na fixtures
 
-**Риск:** Wizz Air отклонён (проверка на человека), его заменил Ryanair. Эндпоинт Ryanair неофициальный и может быть закрыт; тогда запасные источники: Aviationstack, Amadeus Self-Service.
+**Riziko:** Wizz Air je zamietnutý (kontrola „či ste človek“), nahradil ho Ryanair. Endpoint Ryanairu je neoficiálny a môže sa zatvoriť; potom záložné zdroje: Aviationstack, Amadeus Self-Service.
 
-**Готово, когда:** стабильный запуск собирает предложения по ≥5 маршрутам Ryanair в KRK без блокировки. Проверено: 6 аэропортов, 24 запроса, 0 ошибок.
+**Hotové, keď:** stabilné spustenie zbiera ponuky na ≥5 trasách Ryanairu do KRK bez blokácie. Overené: 6 letísk, 24 dopytov, 0 chýb.
 
-## Фаза 4 — Сборщик театра
-- [ ] Выбрать театр (см. `OTVORENE_OTAZKY.md`), проверить, что система продаж показывает наличие мест
-- [ ] **Spike**: как получить программу и наличие мест по категориям; описать в `docs/zdroje/divadlo.md`
-- [ ] Сбор программы → `core.theater_performance`
-- [ ] Снимки наличия → `core.theater_snapshot`
-- [ ] Вычисление `theater.tickets.sold` из разницы снимков + тесты
+## Fáza 4 — Zberač divadla
+- [x] Vybrať divadlo (pozri `OTVORENE_OTAZKY.md`), overiť, že predajný systém ukazuje dostupnosť miest
+- [x] **Spike**: ako získať program a dostupnosť miest podľa kategórií; popísať v `docs/zdroje/divadlo.md`
+- [x] Zber programu → `core.theater_performance`
+- [x] Snímky dostupnosti → `core.theater_snapshot`
+- [x] Výpočet `theater.tickets.sold` z rozdielu snímok + testy
 
-**Готово, когда:** за сутки работы видны снимки и хотя бы одна обнаруженная реальная продажа.
+**Hotové, keď:** za deň prevádzky vidno snímky a aspoň jeden zistený reálny predaj.
 
-## Фаза 5 — Kafka publisher и контракт
-- [ ] JSON Schema в `schemas/events/` для всех типов из `UDALOSTI.md`
-- [ ] `tools/create_topics.py`: топики из `ARCHITEKTURA.md` с партициями и `retention.ms=-1` (идемпотентно)
-- [ ] Envelope, валидация, producer на aiokafka (`acks=all`, идемпотентность, ключ = id сущности, заголовок `event_type`), запись в `core.event_log`
-- [ ] Сборщики публикуют `offer.found` / `offer.observed` / `price_changed` / театральные события
-- [ ] `docs/asyncapi.yaml` (протокол kafka): топики, ключи, заголовки, сообщения
-- [ ] Тестовый consumer `tools/consume.py` (выбор топиков, `--from-beginning`)
+**Stav:** kód, testy (65 prechádza) a reálne spustenie sú hotové (70 predstavení, 8 snímok, 0 chýb). **Kritérium „za deň“ ešte nie je overené**: treba denný beh s opakovanými snímkami; dovtedy nie je zaznamenaný žiadny reálny predaj.
 
-**Готово, когда:** `tools/consume.py --from-beginning` видит все типы событий с валидными схемами, а события одного `offer_id` идут по порядку.
+## Fáza 5 — Kafka publisher a kontrakt
+- [ ] JSON Schema v `schemas/events/` pre všetky typy z `UDALOSTI.md`
+- [ ] `tools/create_topics.py`: topiky z `ARCHITEKTURA.md` s partíciami a `retention.ms=-1` (idempotentne)
+- [ ] Envelope, validácia, producer na aiokafka (`acks=all`, idempotencia, kľúč = id entity, hlavička `event_type`), zápis do `core.event_log`
+- [ ] Zberače publikujú `offer.found` / `offer.observed` / `price_changed` / divadelné udalosti
+- [ ] `docs/asyncapi.yaml` (protokol kafka): topiky, kľúče, hlavičky, správy
+- [ ] Testovací consumer `tools/consume.py` (výber topikov, `--from-beginning`)
 
-## Фаза 6 — Генератор продаж
-- [ ] Модель из `ARCHITEKTURA.md` (вместимость, вероятность продажи, 1–3 места, динамическая цена)
-- [ ] Параметры в конфиге; `seed` и инъекция времени; режим ускоренного времени для демо
-- [ ] События `ticket.sold`, `price_changed`, `sold_out`, `expired`
-- [ ] Тесты: детерминизм при одинаковом seed, места не уходят в минус, продажа на прошедший рейс невозможна
-- [ ] Сверить оценку объёма (`OTVORENE_OTAZKY.md`, сделана после spike обоих источников) с фактическими параметрами: ~10 000 билетов = проданные места + предложения; события считаем отдельно
+**Hotové, keď:** `tools/consume.py --from-beginning` vidí všetky typy udalostí s platnými schémami a udalosti jedného `offer_id` idú v poradí.
 
-**Готово, когда:** за час ускоренного режима появляется правдоподобный поток продаж.
+## Fáza 6 — Generátor predaja
+- [ ] Model z `ARCHITEKTURA.md` (kapacita, pravdepodobnosť predaja, 1–3 miesta, dynamická cena)
+- [ ] Parametre v konfigurácii; `seed` a injekcia času; režim zrýchleného času pre demo
+- [ ] Udalosti `ticket.sold`, `price_changed`, `sold_out`, `expired`
+- [ ] Testy: determinizmus pri rovnakom seede, miesta nejdú do mínusu, predaj na uplynulý let je nemožný
+- [ ] Porovnať odhad objemu (`OTVORENE_OTAZKY.md`, urobený po spiku oboch zdrojov) so skutočnými parametrami: ~10 000 leteniek = predané miesta + ponuky; udalosti počítame osobitne
 
-## Фаза 7 — API и шлюз стрима
-- [ ] FastAPI: REST по предложениям, истории, продажам, театру, журналу событий (пагинация, фильтры)
-- [ ] `GET /stream` (SSE) с фильтром по типам и `Last-Event-ID`
+**Hotové, keď:** za hodinu zrýchleného režimu vznikne vierohodný tok predajov.
+
+## Fáza 7 — API a brána streamu
+- [ ] FastAPI: REST pre ponuky, históriu, predaje, divadlo, žurnál udalostí (stránkovanie, filtre)
+- [ ] `GET /stream` (SSE) s filtrom podľa typov a `Last-Event-ID`
 - [ ] `WS /ws`
-- [ ] Страница `docs/PRE_TIMY.md`: как к нам подключиться (Kafka, SSE, WS, REST) с примерами на Python (aiokafka/confluent-kafka), kcat и curl
+- [ ] Stránka `docs/PRE_TIMY.md`: ako sa k nám pripojiť (Kafka, SSE, WS, REST) s príkladmi v Pythone (aiokafka/confluent-kafka), kcat a curl
 
-**Готово, когда:** другой человек по одной только `PRE_TIMY.md` подключается и получает события.
+**Hotové, keď:** iný človek sa podľa samotného `PRE_TIMY.md` pripojí a dostane udalosti.
 
-## Фаза 8 — Data lake
-- [ ] Writer `lake.message`, общий интерфейс адаптера, runner с перезапуском упавших адаптеров
+## Fáza 8 — Data lake
+- [ ] Writer `lake.message`, spoločné rozhranie adaptéra, runner s reštartom spadnutých adaptérov
 - [ ] `config/lake_sources.yaml`
-- [ ] Адаптер для собственных событий (как эталон)
-- [ ] Адаптеры для каждой команды по мере того, как они публикуют свои интерфейсы (`lake/adapters/team_XX.py` + заметка `docs/timy/team_XX.md`, что и как они отдают)
-- [ ] Простой отчёт: сколько сообщений от какой команды за сутки (`tools/lake_stats.py`)
+- [ ] Adaptér pre vlastné udalosti (ako vzor)
+- [ ] Adaptéry pre každý tím podľa toho, ako zverejnia svoje rozhrania (`lake/adapters/team_XX.py` + poznámka `docs/timy/team_XX.md`, čo a ako poskytujú)
+- [ ] Jednoduchý report: koľko správ od ktorého tímu za deň (`tools/lake_stats.py`)
 
-**Готово, когда:** в lake непрерывно поступают данные минимум от 2 чужих команд.
+**Hotové, keď:** do lake nepretržite prichádzajú dáta aspoň od 2 cudzích tímov.
 
-## Фаза 9 — Развёртывание
-- [ ] Сервер (Hron/ÚVT или VPS), docker compose в продакшене, reverse proxy + HTTPS для API
-- [ ] Kafka EXTERNAL listener: SASL_SSL + SCRAM-SHA-512, правильные `advertised.listeners`, сертификат
-- [ ] Пользователь `teams` + ACL: READ на топики `krakow.*` и группы `team-*`; проверить, что запись запрещена
-- [ ] Проверка подключения **снаружи** сервера (с ноутбука) — consumer читает с offset 0
-- [ ] Расписание работает 24/7, логи, простой healthcheck `/health`
-- [ ] Бэкап БД раз в сутки
+## Fáza 9 — Nasadenie
+- [ ] Server (Hron/ÚVT alebo VPS), docker compose v produkcii, reverse proxy + HTTPS pre API
+- [ ] Kafka EXTERNAL listener: SASL_SSL + SCRAM-SHA-512, správne `advertised.listeners`, certifikát
+- [ ] Používateľ `teams` + ACL: READ na topiky `krakow.*` a skupiny `team-*`; overiť, že zápis je zakázaný
+- [ ] Kontrola pripojenia **zvonku** servera (z notebooku): consumer číta od offsetu 0
+- [ ] Plánovač beží 24/7, logy, jednoduchý healthcheck `/health`
+- [ ] Záloha DB raz denne
 
-**Готово, когда:** система сутки работает без вмешательства.
+**Hotové, keď:** systém beží deň bez zásahu.
 
 ---
 
-## Позже (после 6-й недели)
-- Data warehouse: нормализация данных всех команд, общая модель (звезда/снежинка), ETL из `lake.*`.
+## Neskôr (po 6. týždni)
+- Data warehouse: normalizácia dát všetkých tímov, spoločný model (hviezda/snehová vločka), ETL z `lake.*`.

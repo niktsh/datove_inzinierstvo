@@ -1,7 +1,7 @@
 [project]
 name = "krakow-di"
 version = "0.1.0"
-description = "Kraków flights + theater data collection, Kafka streaming and data lake"
+description = "Zber leteniek a dát divadla v Krakove, streaming cez Kafku a data lake"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [

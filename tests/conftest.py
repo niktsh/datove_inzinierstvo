@@ -16,14 +16,14 @@ def alembic_config(url: str) -> Config:
 
 @pytest.fixture(scope="session")
 def test_db_url():
-    """Throw-away database on the compose Postgres; never touches the working DB."""
+    """Jednorazová databáza na compose Postgrese; pracovnej DB sa nikdy nedotkne."""
     s = Settings(_env_file=".env")
     admin_url = f"postgresql://{s.postgres_user}:{s.postgres_password}@{s.postgres_host}:{s.postgres_port}/postgres"
     name = f"krakow_di_test_{uuid.uuid4().hex[:8]}"
     try:
         admin = psycopg.connect(admin_url, autocommit=True, connect_timeout=3)
     except psycopg.OperationalError as e:
-        pytest.skip(f"Postgres from docker compose is not reachable: {e}")
+        pytest.skip(f"Postgres z docker compose nie je dostupný: {e}")
     admin.execute(f'CREATE DATABASE "{name}"')
     url = admin_url.rsplit("/", 1)[0] + f"/{name}"
     yield url

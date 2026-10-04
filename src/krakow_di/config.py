@@ -22,11 +22,11 @@ class Settings(BaseSettings):
     kafka_teams_user: str = "teams"
     kafka_teams_password: str = "change_me"
 
-    # Sources
+    # Zdroje
     travelpayouts_token: str = ""
     travelpayouts_market: str = "sk"
 
-    # Generator
+    # Generátor
     generator_tick_seconds: int = 300
     generator_seed: int | None = None
     generator_time_speedup: float = 1.0

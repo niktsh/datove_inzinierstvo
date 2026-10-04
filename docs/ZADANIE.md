@@ -1,52 +1,54 @@
-# Задание (зафиксированные требования)
+# Zadanie (zafixované požiadavky)
 
-Источник: записи с цвичения + сообщения преподавателя (Ján Genči) в Teams. Не менять без новых указаний преподавателя.
+Zdroj: poznámky z cvičenia + správy vyučujúceho (Ján Genči) v Teams. Neupravovať bez nových pokynov vyučujúceho.
 
-## Общее
+## Všeobecne
 
-- Технологии и инструменты — на наш выбор («главное, чтобы мы в этом разбирались»).
-- Домены для всей группы: **авиабилеты** и **театр**.
-- Наш город: **Kraków**. Наш театр: **TODO — вписать после выбора** (должен быть уникальным в рамках группы).
-- Команда из 2 человек → **2 источника авиабилетов** (должны быть разными внутри команды; между командами могут повторяться) + **1 театр**.
-  - Источник 1: **Travelpayouts** (Aviasales Data API)
-  - Источник 2: **Ryanair** (публичный Fare Finder API). Первоначально планировался Wizz Air, но сайт закрыт интерактивной проверкой на человека (`docs/zdroje/wizzair.md`), поэтому заменён на Ryanair.
+- Technológie a nástroje sú na našej voľbe („hlavné je, aby sme sa v nich vyznali“).
+- Domény pre celú skupinu: **letenky** a **divadlo**.
+- Naše mesto: **Kraków**. Naše divadlo: **Teatr im. Juliusza Słowackiego w Krakowie** (vybrané na základe spiku, `docs/zdroje/divadlo.md`; v rámci skupiny musí byť jedinečné, bez koordinácie to nemožno overiť).
+- Tím s 2 členmi → **2 zdroje leteniek** (v rámci tímu musia byť rôzne; medzi tímami sa môžu opakovať) + **1 divadlo**.
+  - Zdroj 1: **Travelpayouts** (Aviasales Data API)
+  - Zdroj 2: **Ryanair** (verejné Fare Finder API). Pôvodne bol plánovaný Wizz Air, ale web je chránený interaktívnou kontrolou „či ste človek“ (`docs/zdroje/wizzair.md`), preto ho nahradil Ryanair.
 
-## Авиабилеты
+## Letenky
 
-- Собираем рейсы **в город театра (KRK) из разных аэропортов**. НЕ из Košíc.
-- Только **в одну сторону** (прилёт в Краков).
-- Объём: минимум **~10 рейсов/маршрутов**. Ориентир **~10 000 билетов** = проданные места + предложения (считаем отдельно от количества **событий**: события — это сообщения в потоке, включая `offer.observed`, их будет больше).
-- Каждое найденное предложение сохраняем.
-- **Event generator обязателен.** Мы сами решаем, что билет «продан», и **оповещаем об этом на своём интерфейсе**:
-  какой билет, за какую цену, когда (и др. на наше усмотрение).
-- Одно предложение может быть продано несколько раз (из записей: «можем купить её 3 раза»).
-- Проданное сохраняем и локально.
+- Zbierame lety **do mesta divadla (KRK) z rôznych letísk**. NIE z Košíc.
+- Iba **jedným smerom** (prílet do Krakova).
+- Objem: minimálne **~10 letov/trás**. Orientačne **~10 000 leteniek** = predané miesta + ponuky (počítame osobitne od počtu **udalostí**: udalosti sú správy v streame vrátane `offer.observed`, ich bude viac).
+- Každú nájdenú ponuku ukladáme.
+- **Generátor udalostí je povinný.** Sami rozhodujeme, že letenka je „predaná“, a **oznamujeme to na vlastnom rozhraní**:
+  ktorá letenka, za akú cenu, kedy (a ďalšie údaje podľa nášho uváženia).
+- Jedna ponuka sa môže predať viackrát (zo zápisu: „môžeme ju kúpiť 3-krát“).
+- Predané letenky ukladáme aj lokálne.
 
-## Театр
+## Divadlo
 
-- **Реальные данные на 100%**: постановки, цены, наличие билетов.
-- Следим за **всем театром** (все постановки в его программе).
-- Не брать события, которые раскупаются за несколько минут.
+- Ceny zverejňujeme **v eurách**: pokladňa divadla predáva v PLN, preto uchovávame originál (`price`, `currency=PLN`) a pridávame `price_eur` podľa kurzu ECB v deň snímky. Pri zberačoch leteniek si ceny pýtame rovno v EUR.
 
-## Передача данных
+- **100 % reálne dáta**: inscenácie, ceny, dostupnosť vstupeniek.
+- Sledujeme **celé divadlo** (všetky inscenácie v jeho programe).
+- Nebrať udalosti, ktoré sa vypredajú za pár minút.
 
-- **Стриминг данных обязателен на 100%.**
-- Хранение в БД + доступ для других команд — это **дополнительный** способ получения данных, не замена стриму.
-- **Никакой координации между командами** по протоколам, форматам, кодам. Каждая команда сама проектирует
-  свой интерфейс и формат сообщений. Потребители подстраиваются под поставщика (как в реальной практике).
-- Выбор протокола нужно уметь обосновать (преподаватель против «MQTT просто потому, что знаем только его»).
+## Prenos dát
 
-## Сбор данных других команд
+- **Streaming dát je povinný na 100 %.**
+- Uloženie v DB + prístup pre iné tímy je **doplnkový** spôsob získania dát, nie náhrada streamu.
+- **Žiadna koordinácia medzi tímami** v oblasti protokolov, formátov, kódov. Každý tím si sám navrhuje
+  svoje rozhranie a formát správ. Konzumenti sa prispôsobujú dodávateľovi (ako v reálnej praxi).
+- Voľbu protokolu treba vedieť zdôvodniť (vyučujúci je proti „MQTT len preto, že poznáme iba to“).
 
-- Мы собираем данные **всех** остальных команд → **data lake** (сырые данные, к середине семестра).
-- После 6-й недели — **data warehouse** на основе data lake.
+## Zber dát iných tímov
 
-## Сроки
+- Zbierame dáta **všetkých** ostatných tímov → **data lake** (surové dáta, do polovice semestra).
+- Po 6. týždni — **data warehouse** postavený nad data lake.
 
-- Ближайшее цвичение: **презентация** — что собираем, откуда, как стримим, формат сообщений.
-- Середина семестра: работающий сбор + стрим + data lake.
-- После 6-й недели: data warehouse.
+## Termíny
 
-## Хостинг
+- Najbližšie cvičenie: **prezentácia** — čo zbierame, odkiaľ, ako streamujeme, formát správ.
+- Polovica semestra: fungujúci zber + stream + data lake.
+- Po 6. týždni: data warehouse.
 
-- Варианты: кластер **Hron** (запрос через ÚVT), собственный сервер/VPS, бесплатные облачные тарифы.
+## Hosting
+
+- Možnosti: klaster **Hron** (žiadosť cez ÚVT), vlastný server/VPS, bezplatné cloudové tarify.

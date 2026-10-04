@@ -6,7 +6,7 @@ from tests.conftest import alembic_config
 TABLES = {
     "raw": {"fetch_log"},
     "core": {"flight_offer", "flight_offer_history", "ticket_sale", "theater_performance",
-             "theater_snapshot", "event_log"},
+             "theater_snapshot", "event_log", "fx_rate", "theater_sale"},
     "lake": {"message"},
 }
 
@@ -34,6 +34,15 @@ def test_upgrade_downgrade_upgrade(test_db_url):
     command.downgrade(cfg, "base")
 
 
+def test_downgrade_one_step_removes_only_theater_additions(test_db_url):
+    cfg = alembic_config(test_db_url)
+    command.upgrade(cfg, "head")
+    command.downgrade(cfg, "0001")
+    core = _tables(test_db_url)["core"]
+    assert "fx_rate" not in core and "theater_sale" not in core and "flight_offer" in core
+    command.downgrade(cfg, "base")
+
+
 def test_lake_unique_source_ref(conn):
     ins = ("INSERT INTO lake.message (team, channel, source_ref, payload_raw) "
            "VALUES ('team_01', 'kafka', %s::jsonb, 'x')")
@@ -43,6 +52,6 @@ def test_lake_unique_source_ref(conn):
         raise AssertionError("duplicate source_ref accepted")
     except psycopg.errors.UniqueViolation:
         conn.rollback()
-    # NULL source_ref may repeat
+    # NULL source_ref sa môže opakovať
     conn.execute(ins, (None,))
     conn.execute(ins, (None,))

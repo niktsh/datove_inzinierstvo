@@ -5,7 +5,7 @@ from krakow_di.config import get_settings
 
 
 def _url() -> str:
-    # Tests / tooling can pass a URL via `-x url=...` or config attribute.
+    # Testy/nástroje môžu odovzdať URL cez `-x url=...` alebo atribút konfigurácie.
     x = context.get_x_argument(as_dictionary=True).get("url")
     url = x or context.config.attributes.get("url") or get_settings().database_url
     return url.replace("postgresql://", "postgresql+psycopg://", 1)

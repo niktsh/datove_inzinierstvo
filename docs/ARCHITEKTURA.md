@@ -1,30 +1,30 @@
-# Архитектура
+# Architektúra
 
-## Обзор потоков
+## Prehľad tokov
 
 ```mermaid
 flowchart LR
-  subgraph Sources[Внешние источники]
+  subgraph Sources[Externé zdroje]
     TP[Travelpayouts API]
     RY[Ryanair Fare Finder API]
-    TH[Сайт театра]
+    TH[Web divadla]
   end
 
-  subgraph Us[Наша система]
+  subgraph Us[Náš systém]
     C1[collector: travelpayouts]
     C2[collector: ryanair]
     C3[collector: theater]
     RAW[(PostgreSQL: raw.*)]
     CORE[(PostgreSQL: core.*)]
-    GEN[generator: симуляция продаж]
+    GEN[generator: simulácia predaja]
     PUB[publisher: Kafka producer]
     K{{Apache Kafka\ntopics krakow.*}}
     API[FastAPI: REST + SSE + WebSocket]
-    LAKE[lake runner + адаптеры команд]
+    LAKE[lake runner + adaptéry tímov]
     LK[(PostgreSQL: lake.*)]
   end
 
-  OT[Другие команды]
+  OT[Ostatné tímy]
 
   TP --> C1
   RY --> C2
@@ -36,46 +36,46 @@ flowchart LR
   C1 & C2 & C3 & GEN --> PUB
   PUB --> K
   K -->|consumer group api-gateway| API
-  K -->|Kafka protocol, SASL| OT
+  K -->|Kafka protokol, SASL| OT
   API -->|SSE / WS / REST| OT
-  OT -->|их протоколы| LAKE
+  OT -->|ich protokoly| LAKE
   K -->|consumer group lake-self| LAKE
   LAKE --> LK
 ```
 
-## Компоненты
+## Komponenty
 
-### 1. Сборщики (`collectors/`)
+### 1. Zberače (`collectors/`)
 
-Общий базовый класс: `fetch()` → сохранить сырой ответ в `raw.fetch_log` → `parse()` → upsert в `core.*` → вернуть список изменений → publisher отправляет события в Kafka.
+Spoločná základná logika: `fetch()` → uložiť surovú odpoveď do `raw.fetch_log` → `parse()` → upsert do `core.*` → vrátiť zoznam zmien → publisher pošle udalosti do Kafky.
 
-| Сборщик | Как | Частота (по умолчанию) | Особенности |
+| Zberač | Ako | Frekvencia (predvolená) | Osobitosti |
 |---|---|---|---|
-| `travelpayouts` | httpx, REST, токен из `.env` | каждые 6 ч | Данные из **кэша** поисков пользователей Aviasales, не живые цены. Нет числа мест. Параметр рынка (`market`) влияет на наличие данных. Эндпоинт v3 `prices_for_dates` с `one_way=true`, `destination=KRK`. |
-| `ryanair` | httpx, публичный Fare Finder API (`/api/farfnd/v4/oneWayFares`), без токена | каждые 12 ч (полный проход ≈ 30 мин) | API отдаёт одну самую дешёвую прямую цену на окно дат, поэтому один запрос на аэропорт и день (`From = To`), пауза 1,5 с. Время вылета локальное, без смещения: часовой пояс берётся из официального списка маршрутов KRK. Нет числа мест. При серии ошибок подряд запуск прекращается (признак блокировки). Подробности: `docs/zdroje/ryanair.md`. Wizz Air отклонён: интерактивная проверка на человека (`docs/zdroje/wizzair.md`). |
-| `theater` | httpx или Playwright (если понадобится, добавить зависимость) — зависит от системы продажи | программа: раз в сутки; наличие мест: каждые 2–6 ч | Реальные продажи вычисляем из **уменьшения свободных мест** между снимками. |
+| `travelpayouts` | httpx, REST, token z `.env` | každých 6 h | Dáta z **cache** vyhľadávaní používateľov Aviasales, nie živé ceny. Chýba počet miest. Parameter trhu (`market`) ovplyvňuje dostupnosť dát. Endpoint v3 `prices_for_dates` s `one_way=true`, `destination=KRK`. |
+| `ryanair` | httpx, verejné Fare Finder API (`/api/farfnd/v4/oneWayFares`), bez tokenu | každých 12 h (celý prechod ≈ 30 min) | API vracia jednu najlacnejšiu priamu cenu na okno dátumov, preto jeden dopyt na letisko a deň (`From = To`), pauza 1,5 s. Čas odletu je lokálny, bez posunu: časové pásmo sa berie z oficiálneho zoznamu trás KRK. Chýba počet miest. Pri sérii chýb za sebou sa beh ukončí (znak blokácie). Podrobnosti: `docs/zdroje/ryanair.md`. Wizz Air bol zamietnutý: interaktívna kontrola „či ste človek“ (`docs/zdroje/wizzair.md`). |
+| `theater` | httpx; interné dopyty webu Teatr im. J. Słowackiego: program `POST /ajax/pl/repertoireList`, miesta `GET /sbLocationService/forSale.json` (podrobnosti: `docs/zdroje/divadlo.md`) | program: raz denne; dostupnosť miest: každé 2–6 h | Reálny predaj počítame zo **zmeny počtu voľných miest** podľa kategórií `(názov, cena)` medzi snímkami (nárast = vrátenie, záporné množstvo). Vypredané predstavenia v programe bez odkazu na pokladňu sa tiež ukladajú (`sold_out`). Ceny v PLN, plus `price_eur` podľa kurzu ECB (`core.fx_rate`). Cudzie podujatia a uzavreté predstavenia sa preskakujú. Do `raw.fetch_log` sa pri miestach ukladá kompaktný súhrn (legenda, počet miest), nie celá mapa sály: inak ≈100 MB denne. |
 
-Список аэропортов отправления — в `config/routes.yaml` (Travelpayouts) и `config/routes_ryanair.yaml` (кандидаты, пересекаются с официальным списком маршрутов Ryanair при каждом запуске), минимум 10 маршрутов в KRK. Оба сборщика берут только прямые рейсы. Горизонт дат — 90 дней (настраивается).
+Zoznam letísk odletu je v `config/routes.yaml` (Travelpayouts) a `config/routes_ryanair.yaml` (kandidáti, pri každom spustení sa prekrývajú s oficiálnym zoznamom trás Ryanairu), minimálne 10 trás do KRK. Oba zberače berú iba priame lety. Horizont dátumov je 90 dní (nastaviteľné).
 
-### 2. Генератор (`generator/`)
+### 2. Generátor (`generator/`)
 
-Работает тиками (по умолчанию каждые 5 мин; есть режим «ускоренного времени» для демо).
+Beží v tikoch (predvolene každých 5 min; existuje režim „zrýchleného času“ pre demo).
 
-- Каждому предложению при первом появлении присваивается **симулированная вместимость** (`seats_total`, напр. 180–230 для A320/A321) и стартовая заполненность.
-- На каждом тике: вероятность продажи `p = base_rate × f(дней_до_вылета) × g(цена_относительно_медианы_маршрута)`, `f` растёт к дате вылета.
-- Продажа: 1–3 места (одно предложение продаётся многократно).
-- Динамическая цена: при пересечении порогов заполненности (50 %, 75 %, 90 %) цена растёт на 3–12 % → событие `price_changed`.
-- `seats_left == 0` → `sold_out`; вылет прошёл → `expired`.
-- Детерминизм для тестов: `seed` и инъекция времени.
-- Генератор **не трогает** сырые данные — только `core.flight_offer` и `core.ticket_sale`.
+- Každej ponuke sa pri prvom výskyte priradí **simulovaná kapacita** (`seats_total`, napr. 180–230 pre A320/A321) a počiatočná obsadenosť.
+- V každom tiku: pravdepodobnosť predaja `p = base_rate × f(dni_do_odletu) × g(cena_voči_mediánu_trasy)`, pričom `f` rastie k dátumu odletu.
+- Predaj: 1–3 miesta (jedna ponuka sa predáva viackrát).
+- Dynamická cena: pri prekročení prahov obsadenosti (50 %, 75 %, 90 %) cena rastie o 3–12 % → udalosť `price_changed`.
+- `seats_left == 0` → `sold_out`; odlet uplynul → `expired`.
+- Determinizmus pre testy: `seed` a injekcia času.
+- Generátor sa **nedotýka** surových dát, iba `core.flight_offer` a `core.ticket_sale`.
 
-### 3. Kafka и publisher (`publisher/`)
+### 3. Kafka a publisher (`publisher/`)
 
-**Брокер:** Apache Kafka 4.1.0 в режиме **KRaft** (без ZooKeeper), один брокер в docker compose (официальный образ `apache/kafka`). Для просмотра — веб-интерфейс `kafbat/kafka-ui`.
+**Broker:** Apache Kafka 4.1.0 v režime **KRaft** (bez ZooKeepera), jeden broker v docker compose (oficiálny image `apache/kafka`). Na prezeranie slúži webové rozhranie `kafbat/kafka-ui`.
 
-**Топики** (по сущностям, а не по одному на тип события):
+**Topiky** (podľa entít, nie jeden na typ udalosti):
 
-| Топик | События | Ключ сообщения | Партиции |
+| Topik | Udalosti | Kľúč správy | Partície |
 |---|---|---|---|
 | `krakow.flights.offers` | `flight.offer.found`, `.observed`, `.price_changed`, `.sold_out`, `.expired` | `offer_id` | 3 |
 | `krakow.flights.sales` | `flight.ticket.sold` | `offer_id` | 3 |
@@ -83,68 +83,70 @@ flowchart LR
 | `krakow.theater.availability` | `theater.availability.snapshot` | `performance_id` | 1 |
 | `krakow.theater.sales` | `theater.tickets.sold` | `performance_id` | 1 |
 
-- **Ключ = id сущности** → все события одного предложения попадают в одну партицию и читаются строго по порядку.
-- Тип события дублируется в **заголовке** `event_type` (фильтрация без парсинга тела) и в envelope.
-- **Retention:** `retention.ms=-1` (хранить всё весь семестр) — любая команда может подключиться позже и прочитать историю с offset 0. Объём маленький, диск это выдержит.
-- Формат значения: JSON (UTF-8) с envelope из `UDALOSTI.md`, проверка по JSON Schema из `schemas/events/` перед отправкой.
-- Producer: библиотека **aiokafka**, `acks=all`, `enable_idempotence=True`, сжатие `gzip`.
-- Топики создаются кодом при старте (`tools/create_topics.py`), не автосозданием брокера (`auto.create.topics.enable=false`).
-- Outbox и Schema Registry **не делаем** (решение: избыточно для проекта). Публикация: запись в `core.event_log`, затем отправка в Kafka; JSON Schema-файлы лежат в репозитории.
-- **Бэкап Kafka отдельно не нужен:** свои события хранятся в `core.event_log`, а события других команд — в `lake.message`. Ежедневный бэкап БД покрывает всё; при потере тома Kafka историю можно переиздать из `core.event_log`.
+- **Kľúč = id entity** → všetky udalosti jednej ponuky skončia v jednej partícii a čítajú sa v presnom poradí.
+- Typ udalosti sa duplikuje v **hlavičke** `event_type` (filtrovanie bez parsovania tela) aj v envelope.
+- **Retencia:** `retention.ms=-1` (uchovať všetko počas celého semestra): ktorýkoľvek tím sa môže pripojiť neskôr a prečítať históriu od offsetu 0. Objem je malý, disk to zvládne.
+- Formát hodnoty: JSON (UTF-8) s envelope z `UDALOSTI.md`, pred odoslaním kontrola podľa JSON Schema zo `schemas/events/`.
+- Producer: knižnica **aiokafka**, `acks=all`, `enable_idempotence=True`, kompresia `gzip`.
+- Topiky sa vytvárajú kódom pri štarte (`tools/create_topics.py`), nie automatickým vytváraním brokerom (`auto.create.topics.enable=false`).
+- Outbox a Schema Registry **nerobíme** (rozhodnutie: pre projekt je to zbytočné). Publikovanie: zápis do `core.event_log`, potom odoslanie do Kafky; súbory JSON Schema sú v repozitári.
+- **Zálohu Kafky netreba osobitne:** vlastné udalosti sú v `core.event_log` a udalosti iných tímov v `lake.message`. Denná záloha DB pokrýva všetko; pri strate zväzku Kafky sa história dá znova vydať z `core.event_log`.
 
-**Доступ для других команд:**
-- Два listener'а: `INTERNAL` (внутри docker-сети, без аутентификации) и `EXTERNAL` (публичный адрес, **SASL_SSL + SCRAM-SHA-512**).
-- Пользователь `teams`: ACL **только READ** на топики с префиксом `krakow.` и на consumer group с префиксом `team-`. Записывать к нам никто не может.
-- Внимание: `advertised.listeners` для внешнего доступа — частая причина «подключается, но не читает». Проверять подключением снаружи, не только из контейнера.
+**Prístup pre ostatné tímy:**
+- Dva listenery: `INTERNAL` (vo vnútri docker siete, bez autentifikácie) a `EXTERNAL` (verejná adresa, **SASL_SSL + SCRAM-SHA-512**).
+- Používateľ `teams`: ACL **iba READ** na topiky s prefixom `krakow.` a na consumer groupy s prefixom `team-`. Zapisovať k nám nemôže nikto.
+- Pozor: `advertised.listeners` pre externý prístup je častá príčina „pripojí sa, ale nečíta“. Overovať pripojením zvonku, nielen z kontajnera.
 
-### 4. API и шлюз стрима (`api/`)
+### 4. API a brána streamu (`api/`)
 
-Для команд, которым Kafka-клиент неудобен:
-- `GET /stream` — **Server-Sent Events**, фильтр `?types=flight.ticket.sold,theater.*`, поддержка `Last-Event-ID` (догрузка из `core.event_log`).
-- `WS /ws` — то же по WebSocket.
-- Шлюз читает Kafka как consumer group `api-gateway` и раздаёт подключённым клиентам.
-- REST (`/api/v1/...`): предложения, история цен, продажи, спектакли, снимки театра, журнал событий с пагинацией. OpenAPI генерирует FastAPI.
+Pre tímy, ktorým je Kafka klient nepohodlný:
+- `GET /stream` — **Server-Sent Events**, filter `?types=flight.ticket.sold,theater.*`, podpora `Last-Event-ID` (doťahovanie z `core.event_log`).
+- `WS /ws` — to isté cez WebSocket.
+- Brána číta Kafku ako consumer group `api-gateway` a rozdáva pripojeným klientom.
+- REST (`/api/v1/...`): ponuky, história cien, predaje, predstavenia, snímky divadla, žurnál udalostí so stránkovaním. OpenAPI generuje FastAPI.
 
 ### 5. Data lake (`lake/`)
 
-- Для каждой чужой команды — адаптер `lake/adapters/team_XX.py` с общим интерфейсом: подключиться к их источнику (их протокол!) и отдать сообщения writer'у.
-- Writer сохраняет **как есть**:
+- Pre každý cudzí tím je adaptér `lake/adapters/team_XX.py` so spoločným rozhraním: pripojiť sa k ich zdroju (ich protokolom!) a odovzdať správy writeru.
+- Writer ukladá **tak, ako je**:
   `lake.message(id, team, channel, received_at, source_ref jsonb, content_type, payload_raw bytea, payload_json jsonb NULL)`.
-  `source_ref` — откуда именно: для Kafka `{topic, partition, offset}`, для MQTT `{topic}`, для REST `{url}` и т. п.
-  `payload_json` заполняется, только если сообщение — валидный JSON.
-- Если команда даёт только БД/REST — адаптер периодически опрашивает и сохраняет снимки.
-- Если другая команда тоже на Kafka — адаптер = обычный consumer со своим consumer group; offset коммитится **после** записи в БД (at-least-once; дубли допустимы, их уберёт warehouse по `source_ref`).
-- Свои события тоже пишем в lake (consumer group `lake-self`).
-- Конфиг: `config/lake_sources.yaml`.
+  `source_ref` je presný pôvod: pre Kafku `{topic, partition, offset}`, pre MQTT `{topic}`, pre REST `{url}` a pod.
+  `payload_json` sa vypĺňa len vtedy, ak je správa platný JSON.
+- Ak tím poskytuje iba DB/REST, adaptér ho pravidelne dopytuje a ukladá snímky.
+- Ak je iný tím tiež na Kafke, adaptér = bežný consumer s vlastnou consumer group; offset sa commituje **po** zápise do DB (at-least-once; duplicity sú prípustné, odstráni ich warehouse podľa `source_ref`).
+- Vlastné udalosti ukladáme do lake tiež (consumer group `lake-self`).
+- Konfigurácia: `config/lake_sources.yaml`.
 
-## Схема БД (PostgreSQL)
+## Schéma DB (PostgreSQL)
 
-**`raw`** — всё, что пришло от источников, без изменений
+**`raw`** — všetko, čo prišlo zo zdrojov, bez zmien
 - `raw.fetch_log(id, source, url, request_params jsonb, status_code, fetched_at timestamptz, payload jsonb/bytea, parse_status)`
 
-**`core`** — наши разобранные данные
+**`core`** — naše spracované dáta
 - `core.flight_offer(offer_id PK, source, origin_iata, destination_iata, departure_at, arrival_at, airline_iata, flight_number NULL, stops, price, currency, seats_total, seats_left, status, first_seen_at, last_seen_at)`
 - `core.flight_offer_history(id, offer_id, observed_at, price, seats_left, status, cause)` — `cause`: `scrape` | `generator`
 - `core.ticket_sale(sale_id PK, offer_id, quantity, unit_price, total_price, currency, sold_at)`
-- `core.theater_performance(performance_id PK, title, stage, starts_at, url, status, first_seen_at, last_seen_at)`
-- `core.theater_snapshot(id, performance_id, observed_at, category, price, currency, seats_available)`
-- `core.event_log(event_id PK, event_type, topic, occurred_at, payload jsonb)` — всё опубликованное (для REST и `Last-Event-ID`)
+- `core.theater_performance(performance_id PK, title, stage, starts_at, url NULL, status, repertoire_id NULL, instance_id NULL, location NULL, first_seen_at, last_seen_at)` — `performance_id` = slug pokladne (alebo odvodený pre vypredané), `instance_id` = stabilné id predstavenia na webe divadla, `repertoire_id` = id v predajnom systéme (mapa sály)
+- `core.theater_snapshot(id, performance_id, observed_at, category, price, currency, seats_available, price_eur NULL, fx_rate NULL)`
+- `core.theater_sale(sale_id PK, performance_id, category, quantity, unit_price, currency, unit_price_eur NULL, fx_rate NULL, detected_from, detected_to)` — `quantity < 0` = vrátenie
+- `core.fx_rate(rate_date, currency, per_eur, fetched_at)` — kurzy ECB (1 EUR = N jednotiek meny), aktualizujú sa raz denne podľa potreby
+- `core.event_log(event_id PK, event_type, topic, occurred_at, payload jsonb)` — všetko publikované (pre REST a `Last-Event-ID`)
 
-**`lake`** — данные других команд: `lake.message` как выше; индексы по `(team, received_at)` и уникальность по `(team, source_ref)` где возможно.
+**`lake`** — dáta iných tímov: `lake.message` ako vyššie; indexy podľa `(team, received_at)` a jedinečnosť podľa `(team, source_ref)`, kde je to možné.
 
-`offer_id` — детерминированный хеш (`sha256` → первые 16 hex) от `source + origin_iata + destination_iata + departure_at (с точностью до минуты, UTC) + airline_iata`. `flight_number` и `fare_key` в хеш **не входят** (у Travelpayouts их часто нет, ключ должен быть стабильным между скрейпами). Следствие: два разных рейса одной авиакомпании на одной минуте на одном маршруте считаются одним предложением; для нашей задачи это допустимо.
+`offer_id` — deterministický hash (`sha256` → prvých 16 hex) z `source + origin_iata + destination_iata + departure_at (s presnosťou na minútu, UTC) + airline_iata`. `flight_number` a `fare_key` do hashu **nevstupujú** (Travelpayouts ich často nemá, kľúč musí byť stabilný medzi zbermi). Dôsledok: dva rôzne lety jednej aerolínie v tej istej minúte na tej istej trase sa považujú za jednu ponuku; pre našu úlohu je to prijateľné.
 
-## Развёртывание
+## Nasadenie
 
-- `docker-compose.yml`: `postgres` (`postgres:16.15-alpine`), `kafka` (`apache/kafka:4.1.0`, KRaft, 1 брокер), `kafka-ui` (`kafbat/kafka-ui:v1.4.2`), `app` (scheduler: сборщики + генератор + publisher), `api`, `lake`.
-- Python 3.12. Если театру понадобится браузер, Playwright ставится отдельным образом на базе официального образа Playwright для Python (для авиасборщиков он не нужен).
-- Цель: сервер с публичным адресом (Hron/ÚVT или VPS). Наружу: Kafka EXTERNAL listener (SASL_SSL), HTTP API через reverse proxy с HTTPS. `kafka-ui` наружу **не** открывать.
+- `docker-compose.yml`: `postgres` (`postgres:16.15-alpine`), `kafka` (`apache/kafka:4.1.0`, KRaft, 1 broker), `kafka-ui` (`kafbat/kafka-ui:v1.4.2`), `app` (scheduler: zberače + generátor + publisher), `api`, `lake`.
+- Python 3.12. Ak divadlo bude potrebovať prehliadač, Playwright sa nainštaluje samostatným image na báze oficiálneho Playwright image pre Python (pre letecké zberače netreba).
+- Cieľ: server s verejnou adresou (Hron/ÚVT alebo VPS). Von: Kafka EXTERNAL listener (SASL_SSL), HTTP API cez reverse proxy s HTTPS. `kafka-ui` von **neotvárať**.
 
-## Почему Kafka (обоснование для презентации)
+## Prečo Kafka (zdôvodnenie pre prezentáciu)
 
-- **Лог, а не очередь:** сообщения хранятся, а не исчезают после прочтения. Команда, подключившаяся через месяц, читает всю историю с offset 0 — идеально для data lake и будущего warehouse.
-- **Replay:** если у потребителя был баг, он сбрасывает offset и перечитывает данные, мы для этого ничего не делаем.
-- **Порядок по ключу:** все события одного билета (`offer_id`) в одной партиции → цена и продажи читаются в правильной последовательности.
-- **Независимые потребители:** у каждой команды свой consumer group, они не мешают друг другу и нам.
-- **Индустриальный стандарт** для стриминга и интеграции данных (Kafka Connect, Debezium, Flink, Spark — всё это знает Kafka).
-- **Честно о минусах:** тяжелее RabbitMQ/MQTT, внешний доступ (listeners, SASL, TLS) настраивать сложнее, потребителю нужен Kafka-клиент. Поэтому есть SSE/WebSocket/REST-шлюз — подключиться можно даже через `curl`.
+- **Log, nie fronta:** správy sa uchovávajú a po prečítaní nezmiznú. Tím, ktorý sa pripojí o mesiac, prečíta celú históriu od offsetu 0, ideálne pre data lake a budúci warehouse.
+- **Replay:** ak mal konzument chybu, resetuje offset a prečíta dáta znova, my pre to nemusíme nič robiť.
+- **Poradie podľa kľúča:** všetky udalosti jednej letenky (`offer_id`) sú v jednej partícii → cena a predaje sa čítajú v správnom poradí.
+- **Nezávislí konzumenti:** každý tím má vlastnú consumer group, neovplyvňujú sa navzájom ani nás.
+- **Priemyselný štandard** pre streaming a integráciu dát (Kafka Connect, Debezium, Flink, Spark: to všetko Kafku pozná).
+- **Čestne o nevýhodách:** je ťažšia než RabbitMQ/MQTT, externý prístup (listenery, SASL, TLS) sa nastavuje zložitejšie, konzument potrebuje Kafka klienta. Preto existuje SSE/WebSocket/REST brána: pripojiť sa dá aj cez `curl`.

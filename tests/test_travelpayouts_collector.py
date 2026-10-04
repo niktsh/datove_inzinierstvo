@@ -46,7 +46,7 @@ def test_run_fills_db_and_logs_raw(conn):
     assert [r["parse_status"] for r in rows] == ["ok", "empty"]
     assert "secret-token" not in json.dumps([r["request_params"] for r in rows])
 
-    again = c.run(conn)  # second scrape: same offers, no price changes
+    again = c.run(conn)  # druhý zber: rovnaké ponuky, bez zmeny cien
     assert again.counts() == {"observed": len(s.changes)}
     assert conn.execute("SELECT count(*) AS n FROM core.flight_offer").fetchone()["n"] == n
 
@@ -62,7 +62,7 @@ def test_retries_on_429_and_5xx_with_backoff(conn):
             return httpx.Response(503)
         return httpx.Response(200, json=EMPTY)
 
-    c, sleeps = make(handler, days=1)  # one month
+    c, sleeps = make(handler, days=1)  # jeden mesiac
     s = c.run(conn)
     assert calls["n"] == 3 and s.errors == 0 and s.empty == 1
     assert sleeps == [7.0, 2.0]

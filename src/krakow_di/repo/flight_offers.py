@@ -10,7 +10,7 @@ from krakow_di.ids import make_offer_id
 
 @dataclass(frozen=True)
 class OfferObservation:
-    """One scraped offer. Seats are owned by the generator and are not part of it."""
+    """Jedna zozbieraná ponuka. Miesta patria generátoru a nie sú jej súčasťou."""
 
     source: str
     origin_iata: str
@@ -40,9 +40,9 @@ class UpsertResult:
 
 
 def upsert_offer(conn: psycopg.Connection, obs: OfferObservation) -> UpsertResult:
-    """Insert or refresh an offer and append a scrape row to flight_offer_history.
+    """Vloží alebo obnoví ponuku a pripíše riadok zberu do flight_offer_history.
 
-    Runs inside the caller's transaction (no commit here). seats_* are never touched.
+    Beží v transakcii volajúceho (tu sa necommituje). seats_* sa nikdy nemenia.
     """
     offer_id = obs.offer_id
     existing = conn.execute(
@@ -67,7 +67,7 @@ def upsert_offer(conn: psycopg.Connection, obs: OfferObservation) -> UpsertResul
         ).fetchone()
         if row is not None:
             change, old_price = "found", None
-        else:  # lost a race with a concurrent insert
+        else:  # súbeh s paralelným vložením prehraný
             return upsert_offer(conn, obs)
     else:
         old_price = existing["price"]

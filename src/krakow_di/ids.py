@@ -9,12 +9,12 @@ def make_offer_id(
     departure_at: datetime,
     airline_iata: str,
 ) -> str:
-    """Deterministic offer id: sha256(source|origin|dest|departure UTC to the minute|airline)[:16].
+    """Deterministické offer id: sha256(source|origin|dest|odlet UTC na minútu|airline)[:16].
 
-    flight_number and fare_key are deliberately excluded (see ARCHITEKTURA.md).
+    flight_number a fare_key sú zámerne vynechané (pozri ARCHITEKTURA.md).
     """
     if departure_at.tzinfo is None:
-        raise ValueError("departure_at must be timezone-aware")
+        raise ValueError("departure_at musí mať časové pásmo")
     dep = departure_at.astimezone(UTC).strftime("%Y-%m-%dT%H:%MZ")
     key = "|".join(
         [source.strip().lower(), origin_iata.strip().upper(), destination_iata.strip().upper(),

@@ -11,7 +11,7 @@ def log_fetch(
     payload: dict | list | None,
     parse_status: str = "pending",
 ) -> int:
-    """Store a raw response as received. Never put secrets (tokens) into request_params."""
+    """Uloží surovú odpoveď tak, ako prišla. Do request_params nikdy nedávať tajomstvá (tokeny)."""
     row = conn.execute(
         """
         INSERT INTO raw.fetch_log (source, url, request_params, status_code, payload, parse_status)

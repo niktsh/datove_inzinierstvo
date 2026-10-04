@@ -1,4 +1,4 @@
-"""initial schema: raw, core, lake
+"""úvodná schéma: raw, core, lake
 
 Revision ID: 0001
 Revises:

@@ -16,7 +16,7 @@ class RoutesConfig:
     origins: tuple[str, ...]
 
     def months(self, today: date) -> list[str]:
-        """Calendar months (YYYY-MM) covering today .. today + horizon_days."""
+        """Kalendárne mesiace (YYYY-MM) pokrývajúce dnes .. dnes + horizon_days."""
         end = today + timedelta(days=self.horizon_days)
         out, y, m = [], today.year, today.month
         while (y, m) <= (end.year, end.month):
@@ -29,9 +29,9 @@ def load_routes(path: Path | str = DEFAULT_PATH) -> RoutesConfig:
     raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     origins = tuple(str(o["query"]).upper() for o in raw["origins"])
     if len(set(origins)) != len(origins):
-        raise ValueError("duplicate origins in routes config")
+        raise ValueError("duplicitné letiská odletu v konfigurácii trás")
     if raw["destination"].upper() in origins:
-        raise ValueError("destination listed among origins")
+        raise ValueError("cieľ je uvedený medzi letiskami odletu")
     return RoutesConfig(
         destination=raw["destination"].upper(),
         horizon_days=int(raw.get("horizon_days", 90)),

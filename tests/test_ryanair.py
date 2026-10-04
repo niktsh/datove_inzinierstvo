@@ -44,7 +44,7 @@ def test_parse_fares_real_fixture():
     assert o.source == "ryanair" and o.origin_iata == "BCN" and o.destination_iata == "KRK"
     assert o.flight_number == "FR3035" and o.airline_iata == "FR" and o.stops == 0
     assert o.price == Decimal("45.99") and o.currency == "EUR"
-    # naive local times get the airport offsets (CEST, UTC+2, on 21 Oct 2026)
+    # lokálne časy bez posunu dostanú posun letiska (CEST, UTC+2, 21. 10. 2026)
     assert o.departure_at.isoformat() == "2026-10-21T18:35:00+02:00"
     assert o.arrival_at.isoformat() == "2026-10-21T21:25:00+02:00"
     assert o.departure_at.astimezone(UTC).hour == 16
@@ -107,19 +107,19 @@ def test_run_one_request_per_origin_and_day(conn):
     c, sleeps = make(handler)
     s = c.run(conn)
     fares = [r for r in seen if "oneWayFares" in r.url.path]
-    # BCN and VIE are active (OSL is not a Ryanair route to KRK), 3 days each
+    # BCN a VIE sú aktívne (OSL nie je trasa Ryanairu do KRK), po 3 dni
     assert len(fares) == 6 and s.requests == 6 and s.errors == 0 and not s.aborted
     assert {(r.url.params["departureAirportIataCode"]) for r in fares} == {"BCN", "VIE"}
     assert [r.url.params["outboundDepartureDateFrom"] for r in fares[:3]] == [
         "2026-10-03", "2026-10-04", "2026-10-05"]
-    assert sleeps.count(1.5) == 5  # pause between all 6 fare requests
+    assert sleeps.count(1.5) == 5  # pauza medzi všetkými 6 dopytmi na ceny
     assert s.counts() == {"found": 6}
     n = conn.execute("SELECT count(*) AS n FROM core.flight_offer WHERE source='ryanair'")
     assert n.fetchone()["n"] == 6
     statuses = conn.execute(
         "SELECT parse_status, count(*) AS n FROM raw.fetch_log GROUP BY 1 ORDER BY 1"
     ).fetchall()
-    assert statuses == [{"parse_status": "ok", "n": 7}]  # 6 fares + route list
+    assert statuses == [{"parse_status": "ok", "n": 7}]  # 6 cien + zoznam trás
 
 
 def test_second_run_observed_then_price_change(conn):
@@ -165,7 +165,7 @@ def test_block_aborts_run_after_consecutive_errors(conn):
     cfg = RyanairConfig("KRK", "Europe/Warsaw", 90, "EUR", "en-gb", 1.5, 3, ("BCN", "VIE"))
     c, _ = make(handler, cfg=cfg)
     s = c.run(conn)
-    assert s.aborted and s.errors == 3 and calls["fares"] == 3  # 409 is not retried
+    assert s.aborted and s.errors == 3 and calls["fares"] == 3  # 409 sa neopakuje
     rows = conn.execute("SELECT status_code FROM raw.fetch_log WHERE parse_status='error'")
     assert [r["status_code"] for r in rows.fetchall()] == [409, 409, 409]
 

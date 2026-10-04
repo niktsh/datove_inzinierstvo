@@ -5,7 +5,7 @@ from krakow_di.repo.flight_offers import OfferObservation, UpsertResult
 
 @dataclass(frozen=True)
 class OfferChange:
-    """What a scrape did to one offer; the publisher (phase 5) turns this into an event."""
+    """Čo zber urobil s jednou ponukou; publisher (fáza 5) z toho vytvorí udalosť."""
 
     observation: OfferObservation
     result: UpsertResult

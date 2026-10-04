@@ -1,4 +1,4 @@
-"""Travelpayouts (Aviasales Data API) collector: cached cheapest one-way prices into KRK."""
+"""Zberač Travelpayouts (Aviasales Data API): najlacnejšie ceny jedným smerom do KRK z cache."""
 
 import argparse
 import logging
@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 def parse_response(
     body: dict, destination: str, observed_at: datetime, max_stops: int | None = None
 ) -> list[OfferObservation]:
-    """Turn one API body into observations: one per offer_id (cheapest wins), no past flights."""
+    """Premení telo odpovede API na pozorovania: jedno na offer_id (najlacnejšie), bez minulých."""
     best: dict[str, OfferObservation] = {}
     for item in body.get("data") or []:
         try:
@@ -36,7 +36,7 @@ def parse_response(
             price = Decimal(str(item["price"]))
             origin = item.get("origin_airport") or item["origin"]
         except (KeyError, ValueError, TypeError, ArithmeticError):
-            log.warning("skipping malformed item: %r", item)
+            log.warning("preskakujem chybnú položku: %r", item)
             continue
         if dep.tzinfo is None or dep <= observed_at:
             continue
@@ -78,7 +78,7 @@ class TravelpayoutsCollector:
         max_attempts: int = 4,
     ):
         if not settings.travelpayouts_token:
-            raise RuntimeError("TRAVELPAYOUTS_TOKEN is not set")
+            raise RuntimeError("TRAVELPAYOUTS_TOKEN nie je nastavený")
         self.settings, self.routes = settings, routes
         self.client = client or httpx.Client(timeout=30)
         self.sleep, self.now, self.pause, self.max_attempts = sleep, now, pause, max_attempts
@@ -135,7 +135,7 @@ class TravelpayoutsCollector:
         if not ok:
             summary.errors += 1
             conn.commit()
-            log.error("%s %s: request failed (status %s)", origin, month, status)
+            log.error("%s %s: dopyt zlyhal (stav %s)", origin, month, status)
             return
         observed_at = self.now()
         observations = parse_response(
@@ -152,7 +152,7 @@ class TravelpayoutsCollector:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run the Travelpayouts collector once")
+    parser = argparse.ArgumentParser(description="Jedenkrát spustí zberač Travelpayouts")
     parser.add_argument("--routes", default="config/routes.yaml")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -164,7 +164,7 @@ def main() -> None:
         f"requests={summary.requests} errors={summary.errors} empty={summary.empty} "
         f"changes={summary.counts()}"
     )
-    print("offers by origin airport:", summary.offers_by_origin())
+    print("ponuky podľa letiska odletu:", summary.offers_by_origin())
 
 
 if __name__ == "__main__":

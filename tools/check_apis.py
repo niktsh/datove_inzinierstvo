@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """
-Smoke test + coverage report for the project's data sources (Europe only).
+Smoke test + report pokrytia dátových zdrojov projektu (iba Európa).
 
-Setup:
+Prieskumný skript z fázy výberu mesta a divadla; nepatrí do produkčného toku.
+
+Príprava:
     pip install httpx python-dotenv
-    .env next to this file (repo root):
+    .env vedľa tohto súboru (koreň repozitára):
         TRAVELPAYOUTS_TOKEN=...
         TICKETMASTER_KEY=...
-        AVIATIONSTACK_KEY=...      # optional
+        AVIATIONSTACK_KEY=...      # voliteľné
     uv run python tools/check_apis.py
 
-Output: console tables + ./samples/ (raw responses, summary.json, coverage.json)
+Výstup: tabuľky v konzole + ./samples/ (surové odpovede, summary.json, coverage.json)
 """
 
 import json
@@ -35,7 +37,7 @@ SAMPLES = Path("samples")
 SAMPLES.mkdir(exist_ok=True)
 results = []  # {"check", "ok", "detail"}
 
-# name, city IATA (Travelpayouts), Ticketmaster country code, Ticketmaster city spellings
+# názov, IATA mesta (Travelpayouts), kód krajiny Ticketmaster, názvy mesta pre Ticketmaster
 CITIES = [
     ("Bratislava", "BTS", "SK", ["Bratislava"]),
     ("Košice", "KSC", "SK", ["Košice", "Kosice"]),
@@ -59,7 +61,7 @@ CITIES = [
     ("Dublin", "DUB", "IE", ["Dublin"]),
     ("Zurich", "ZRH", "CH", ["Zurich", "Zürich"]),
 ]
-ORIGINS = ["BTS", "VIE"]  # departure cities to test flight coverage from
+ORIGINS = ["BTS", "VIE"]  # mestá odletu, z ktorých testujeme pokrytie letov
 
 
 def record(name, ok, detail=""):
@@ -82,7 +84,7 @@ def rate_headers(resp):
 
 
 def get(url, **kw):
-    """GET with one retry on HTTP 429. Returns Response or Exception."""
+    """GET s jedným opakovaním pri HTTP 429. Vráti Response alebo Exception."""
     for attempt in range(2):
         try:
             r = httpx.get(url, timeout=20, **kw)
@@ -98,14 +100,14 @@ def get(url, **kw):
 DOMAINS = [
     ("api.travelpayouts.com", "https"),
     ("app.ticketmaster.com", "https"),
-    ("api.aviationstack.com", "http"),  # free plan = HTTP only
+    ("api.aviationstack.com", "http"),  # bezplatný plán = iba HTTP
     ("pypi.org", "https"),
     ("registry-1.docker.io", "https"),
 ]
 
 
 def check_domains():
-    print("\n1) Domain reachability (404/403 on the root path is normal for API hosts)")
+    print("\n1) Dostupnosť domén (404/403 na koreňovej ceste je pri API hostoch normálne)")
     for host, scheme in DOMAINS:
         try:
             ip = socket.gethostbyname(host)
@@ -152,11 +154,11 @@ def tp_query(token, origin, dest, month):
 
 
 def check_travelpayouts():
-    print("\n2) Travelpayouts Data API (flights)")
+    print("\n2) Travelpayouts Data API (lety)")
     token = os.getenv("TRAVELPAYOUTS_TOKEN")
     coverage = {}
     if not token:
-        record("Travelpayouts token", False, "TRAVELPAYOUTS_TOKEN not set")
+        record("Token Travelpayouts", False, "TRAVELPAYOUTS_TOKEN nie je nastavený")
         return coverage
     month = (date.today() + timedelta(days=30)).strftime("%Y-%m")
     auth_ok, sample_saved = False, False
@@ -182,19 +184,19 @@ def check_travelpayouts():
                 save("travelpayouts_prices_for_dates", body)
                 missing = [f for f in TP_EXPECTED if f not in data[0]]
                 record(
-                    "Travelpayouts expected fields",
+                    "Očakávané polia Travelpayouts",
                     not missing,
-                    f"missing: {missing}" if missing else "all present",
+                    f"chýbajú: {missing}" if missing else "všetky prítomné",
                 )
                 hdrs = rate_headers(r)
                 if hdrs:
-                    print("     rate-limit headers:", hdrs)
+                    print("     hlavičky limitov:", hdrs)
                 sample_saved = True
     record(
-        "Travelpayouts auth + responses", auth_ok, f"month {month}, origins {ORIGINS}"
+        "Travelpayouts autentifikácia + odpovede", auth_ok, f"mesiac {month}, odlety {ORIGINS}"
     )
     print(
-        "     NOTE: cached prices (cheapest found by users in the last 48h), no availability flag."
+        "     POZNÁMKA: ceny z cache (najlacnejšie za posledných 48 h), bez príznaku dostupnosti."
     )
     return coverage
 
@@ -204,7 +206,7 @@ TM_URL = "https://app.ticketmaster.com/discovery/v2/events.json"
 
 
 def tm_city(key, country, variants):
-    """Try city spellings until one returns events. Returns (spelling, total, events) or None."""
+    """Skúša názvy mesta, kým niektorý nevráti udalosti. Vráti n-ticu s udalosťami alebo None."""
     for spelling in variants:
         r = get(
             TM_URL,
@@ -217,10 +219,10 @@ def tm_city(key, country, variants):
                 "sort": "date,asc",
             },
         )
-        time.sleep(0.3)  # stay under 5 req/s
+        time.sleep(0.3)  # držať sa pod 5 dopytmi/s
         if isinstance(r, Exception) or r.status_code != 200:
             code = (
-                "network error" if isinstance(r, Exception) else f"HTTP {r.status_code}"
+                "sieťová chyba" if isinstance(r, Exception) else f"HTTP {r.status_code}"
             )
             print(f"     ! {spelling}: {code}")
             continue
@@ -238,11 +240,11 @@ def tm_city(key, country, variants):
 
 
 def check_ticketmaster():
-    print("\n3) Ticketmaster Discovery API (theatre events)")
+    print("\n3) Ticketmaster Discovery API (divadelné udalosti)")
     key = os.getenv("TICKETMASTER_KEY")
     coverage = {}
     if not key:
-        record("Ticketmaster key", False, "TICKETMASTER_KEY not set")
+        record("Kľúč Ticketmaster", False, "TICKETMASTER_KEY nie je nastavený")
         return coverage
     all_status, saved = Counter(), False
     for name, _, country, variants in CITIES:
@@ -265,36 +267,36 @@ def check_ticketmaster():
         }
         if not saved:
             save("ticketmaster_events_sample", body)
-            print("     rate-limit headers:", hdrs)
+            print("     hlavičky limitov:", hdrs)
             saved = True
     good = [n for n, c in coverage.items() if c["total"] >= 20]
     record(
-        "Ticketmaster auth + coverage",
+        "Ticketmaster autentifikácia + pokrytie",
         bool(good),
-        f"{len(good)} cities with >=20 theatre events",
+        f"{len(good)} miest s >=20 divadelnými udalosťami",
     )
-    print("     status codes seen in sampled events:", dict(all_status))
+    print("     stavové kódy vo vzorke udalostí:", dict(all_status))
     return coverage
 
 
 # ------------------------------------------------------------- 4. AviationStack
 def check_aviationstack():
-    print("\n4) AviationStack (optional, flight status - not prices)")
+    print("\n4) AviationStack (voliteľné, stav letov, nie ceny)")
     key = os.getenv("AVIATIONSTACK_KEY")
     if not key:
-        print("  skipped (AVIATIONSTACK_KEY not set)")
+        print("  preskočené (AVIATIONSTACK_KEY nie je nastavený)")
         return
     r = get(
         "http://api.aviationstack.com/v1/flights",
         params={"access_key": key, "limit": 1},
     )
     if isinstance(r, Exception):
-        record("AviationStack request", False, str(r))
+        record("Dopyt AviationStack", False, str(r))
         return
     body = r.json()
     save("aviationstack_flights", body)
     record(
-        "AviationStack response",
+        "Odpoveď AviationStack",
         r.status_code == 200 and "data" in body,
         f"HTTP {r.status_code}"
         + (f", error={body['error']}" if "error" in body else ""),
@@ -304,10 +306,10 @@ def check_aviationstack():
 # ------------------------------------------------------------- 5. report
 def print_report(tp, tm):
     print(
-        "\n5) Coverage report (theatres = Ticketmaster, flights = Travelpayouts, next month)"
+        "\n5) Report pokrytia (divadlá = Ticketmaster, lety = Travelpayouts, budúci mesiac)"
     )
-    head = f"{'City':<12}{'TM events':>10}{'with price':>12}   " + "".join(
-        f"{'from ' + o:>16}" for o in ORIGINS
+    head = f"{'Mesto':<12}{'TM udalosti':>12}{'s cenou':>10}   " + "".join(
+        f"{'z ' + o:>16}" for o in ORIGINS
     )
     print(head)
     print("-" * len(head))
@@ -327,9 +329,9 @@ def print_report(tp, tm):
                 cells.append("err/?")
             else:
                 cells.append(
-                    f"{t['offers']} (min {t['min_price']}€)" if t["offers"] else "0"
+                    f"{t['offers']} (min {t['min_price']} €)" if t["offers"] else "0"
                 )
-        print(f"{name:<12}{ev:>10}{pr:>12}   " + "".join(f"{x:>16}" for x in cells))
+        print(f"{name:<12}{ev:>12}{pr:>10}   " + "".join(f"{x:>16}" for x in cells))
     both = [
         n
         for n, *_ in CITIES
@@ -337,8 +339,8 @@ def print_report(tp, tm):
         and any(isinstance(v, dict) and v["offers"] for v in tp.get(n, {}).values())
     ]
     print(
-        "\nCandidate destinations (>=20 theatre events AND flight offers found):",
-        ", ".join(both) or "none",
+        "\nKandidátske ciele (>=20 divadelných udalostí A nájdené letenky):",
+        ", ".join(both) or "žiadne",
     )
     save(
         "coverage",
@@ -352,7 +354,7 @@ def print_report(tp, tm):
 
 
 if __name__ == "__main__":
-    print(f"API smoke test, {datetime.now():%Y-%m-%d %H:%M}")
+    print(f"Smoke test API, {datetime.now():%Y-%m-%d %H:%M}")
     check_domains()
     tp_cov = check_travelpayouts()
     tm_cov = check_ticketmaster()
@@ -361,7 +363,7 @@ if __name__ == "__main__":
         print_report(tp_cov, tm_cov)
 
     failed = [r for r in results if not r["ok"]]
-    print(f"\nSummary: {len(results) - len(failed)} passed, {len(failed)} failed")
+    print(f"\nSúhrn: {len(results) - len(failed)} prešlo, {len(failed)} zlyhalo")
     for r in failed:
         print(f"  - {r['check']}: {r['detail']}")
     save(

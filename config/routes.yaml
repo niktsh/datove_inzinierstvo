@@ -1,17 +1,17 @@
-# Маршруты в Краков (только в одну сторону). Проверено реальным запросом 2026-10-03.
-# `query` — код, по которому спрашиваем Travelpayouts (может быть кодом города:
-# BRU -> CRL, OSL -> TRF); реальный аэропорт берётся из ответа.
+# Trasy do Krakova (iba jedným smerom). Overené reálnym dopytom 2026-10-03.
+# `query` je kód, podľa ktorého sa pýtame Travelpayouts (môže to byť kód mesta:
+# BRU -> CRL, OSL -> TRF); skutočné letisko sa berie z odpovede.
 destination: KRK
 horizon_days: 90
 currency: eur
-max_stops: 0        # только прямые рейсы; сырой ответ в raw.fetch_log хранится целиком
+max_stops: 0        # iba priame lety; surová odpoveď sa v raw.fetch_log ukladá celá
 
 origins:
   - {query: ARN, note: "Stockholm Arlanda"}
   - {query: BGY, note: "Milan Bergamo"}
   - {query: CPH, note: "Copenhagen"}
-  - {query: BRU, note: "Brussels (в ответе в основном CRL Charleroi)"}
-  - {query: OSL, note: "Oslo (в ответе в основном TRF Torp)"}
+  - {query: BRU, note: "Brussels (v odpovedi hlavne CRL Charleroi)"}
+  - {query: OSL, note: "Oslo (v odpovedi hlavne TRF Torp)"}
   - {query: BCN, note: "Barcelona"}
   - {query: FCO, note: "Rome Fiumicino"}
   - {query: VIE, note: "Vienna"}
@@ -19,5 +19,5 @@ origins:
   - {query: STN, note: "London Stansted"}
   - {query: DUB, note: "Dublin"}
   - {query: EIN, note: "Eindhoven"}
-  - {query: MAD, note: "Madrid (мало прямых)"}
-  - {query: MLA, note: "Malta (мало прямых)"}
+  - {query: MAD, note: "Madrid (málo priamych letov)"}
+  - {query: MLA, note: "Malta (málo priamych letov)"}

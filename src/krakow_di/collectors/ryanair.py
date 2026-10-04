@@ -1,8 +1,8 @@
-"""Ryanair collector: cheapest direct fare per route and day from the public Fare Finder API.
+"""Zberač Ryanairu: najlacnejšia priama cena na trasu a deň z verejného Fare Finder API.
 
-The endpoint returns only the single cheapest fare inside the requested date window, so we ask
-for one day at a time. Times come without UTC offset (airport local time); the offset is taken
-from the airport time zone in Ryanair's own route list.
+Endpoint vracia iba jednu najlacnejšiu cenu v požadovanom okne dátumov, preto sa pýtame
+po jednom dni. Časy prichádzajú bez posunu od UTC (lokálny čas letiska); posun sa berie
+z časového pásma letiska v oficiálnom zozname trás Ryanairu.
 """
 
 import argparse
@@ -20,7 +20,7 @@ import psycopg
 import yaml
 
 from krakow_di.collectors.base import OfferChange, RunSummary
-from krakow_di.collectors.http import get_with_retry
+from krakow_di.collectors.http import USER_AGENT, get_with_retry
 from krakow_di.db import connect
 from krakow_di.repo.flight_offers import OfferObservation, upsert_offer
 from krakow_di.repo.raw import log_fetch, set_parse_status
@@ -28,11 +28,7 @@ from krakow_di.repo.raw import log_fetch, set_parse_status
 SOURCE = "ryanair"
 FARES_URL = "https://www.ryanair.com/api/farfnd/v4/oneWayFares"
 ROUTES_URL = "https://www.ryanair.com/api/views/locate/searchWidget/routes/en/airport/{dest}"
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/150.0 Safari/537.36",
-    "Accept": "application/json",
-}
+HEADERS = {"User-Agent": USER_AGENT, "Accept": "application/json"}
 
 log = logging.getLogger(__name__)
 
@@ -54,8 +50,8 @@ def load_config(path: Path | str = "config/routes_ryanair.yaml") -> RyanairConfi
     candidates = tuple(dict.fromkeys(str(c).upper() for c in raw["candidates"]))
     dest = raw["destination"].upper()
     if dest in candidates:
-        raise ValueError("destination listed among candidates")
-    ZoneInfo(raw["destination_tz"])  # fail early on a bad zone name
+        raise ValueError("cieľ je uvedený medzi kandidátmi")
+    ZoneInfo(raw["destination_tz"])  # zlyhať hneď pri chybnom názve pásma
     return RyanairConfig(
         destination=dest,
         destination_tz=raw["destination_tz"],
@@ -69,7 +65,7 @@ def load_config(path: Path | str = "config/routes_ryanair.yaml") -> RyanairConfi
 
 
 def parse_routes(body: list, candidates: tuple[str, ...]) -> dict[str, str]:
-    """Official route list -> {airport IATA: IANA time zone}, restricted to our candidates."""
+    """Oficiálny zoznam trás -> {IATA letiska: IANA pásmo}, iba naši kandidáti."""
     zones: dict[str, str] = {}
     for item in body:
         try:
@@ -85,7 +81,7 @@ def parse_routes(body: list, candidates: tuple[str, ...]) -> dict[str, str]:
 
 def _local(naive: str, zone: str) -> datetime:
     dt = datetime.fromisoformat(naive)
-    if dt.tzinfo is not None:  # defensive: the API may start sending offsets
+    if dt.tzinfo is not None:  # obranne: API môže začať posielať posuny
         return dt
     return dt.replace(tzinfo=ZoneInfo(zone))
 
@@ -98,7 +94,7 @@ def parse_fares(
     destination_tz: str,
     observed_at: datetime,
 ) -> list[OfferObservation]:
-    """One observation per fare in the body (normally one); malformed/past/foreign skipped."""
+    """Jedno pozorovanie na každú cenu v tele (zvyčajne jedna); chybné/minulé/cudzie preskočí."""
     out: list[OfferObservation] = []
     for fare in body.get("fares") or []:
         try:
@@ -111,7 +107,7 @@ def parse_fares(
             dep = _local(ob["departureDate"], origin_tz)
             arr = _local(ob["arrivalDate"], destination_tz) if ob.get("arrivalDate") else None
         except (KeyError, TypeError, ValueError, ArithmeticError):
-            log.warning("skipping malformed fare: %r", fare)
+            log.warning("preskakujem chybnú cenu: %r", fare)
             continue
         if dep_airport != origin or arr_airport != destination or len(number) < 3:
             continue
@@ -155,7 +151,7 @@ class RyanairCollector:
         )
 
     def load_origins(self, conn: psycopg.Connection) -> dict[str, str]:
-        """Active origins = our candidates that Ryanair itself lists as routes to KRK."""
+        """Aktívne letiská odletu = naši kandidáti, ktoré Ryanair sám uvádza ako trasy do KRK."""
         url = ROUTES_URL.format(dest=self.cfg.destination)
         resp = self._get(url, {})
         body = None
@@ -169,11 +165,11 @@ class RyanairCollector:
                   {"routes": body} if ok else None, "ok" if ok else "error")
         conn.commit()
         if not ok:
-            raise RuntimeError("could not load Ryanair route list")
+            raise RuntimeError("nepodarilo sa načítať zoznam trás Ryanairu")
         zones = parse_routes(body, self.cfg.candidates)
         missing = [c for c in self.cfg.candidates if c not in zones]
         if missing:
-            log.info("candidates without a Ryanair route to %s: %s", self.cfg.destination, missing)
+            log.info("kandidáti bez trasy Ryanairu do %s: %s", self.cfg.destination, missing)
         return zones
 
     def run(
@@ -199,14 +195,14 @@ class RyanairCollector:
                 consecutive = consecutive + 1 if failed else 0
                 if consecutive >= self.cfg.max_consecutive_errors:
                     summary.aborted = True
-                    log.error("%d errors in a row, stopping (possible block)", consecutive)
+                    log.error("%d chýb za sebou, zastavujem (možná blokácia)", consecutive)
                     return summary
         return summary
 
     def _collect_one(
         self, conn: psycopg.Connection, origin: str, zone: str, day: date, summary: RunSummary
     ) -> bool:
-        """Fetch one origin/day. Returns True if the request failed."""
+        """Stiahne jedno letisko/deň. Vráti True, ak dopyt zlyhal."""
         params = {
             "departureAirportIataCode": origin,
             "arrivalAirportIataCode": self.cfg.destination,
@@ -231,7 +227,7 @@ class RyanairCollector:
         if not ok:
             summary.errors += 1
             conn.commit()
-            log.error("%s %s: request failed (status %s)", origin, day,
+            log.error("%s %s: dopyt zlyhal (stav %s)", origin, day,
                       resp.status_code if resp is not None else None)
             return True
         observations = parse_fares(
@@ -249,10 +245,10 @@ class RyanairCollector:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run the Ryanair collector once")
+    parser = argparse.ArgumentParser(description="Jedenkrát spustí zberač Ryanairu")
     parser.add_argument("--config", default="config/routes_ryanair.yaml")
-    parser.add_argument("--origins", help="comma-separated subset, e.g. BCN,VIE")
-    parser.add_argument("--days", type=int, help="override horizon_days (for quick checks)")
+    parser.add_argument("--origins", help="podmnožina oddelená čiarkou, napr. BCN,VIE")
+    parser.add_argument("--days", type=int, help="prepíše horizon_days (na rýchle kontroly)")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -264,7 +260,7 @@ def main() -> None:
         f"requests={summary.requests} errors={summary.errors} empty={summary.empty} "
         f"aborted={summary.aborted} changes={summary.counts()}"
     )
-    print("offers by origin airport:", summary.offers_by_origin())
+    print("ponuky podľa letiska odletu:", summary.offers_by_origin())
 
 
 if __name__ == "__main__":

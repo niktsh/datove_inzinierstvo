@@ -1,30 +1,36 @@
 # Kraków DI
 
-Сбор авиабилетов (Travelpayouts, Ryanair) и данных театра в Кракове, генератор продаж,
-стриминг через Kafka, data lake. Документация — в [docs/](docs/), план — [docs/PLAN.md](docs/PLAN.md).
+Zber leteniek (Travelpayouts, Ryanair) a dát divadla v Krakove, generátor predaja,
+streaming cez Kafku, data lake. Dokumentácia je v [docs/](docs/), plán v [docs/PLAN.md](docs/PLAN.md).
 
-## Запуск с нуля
+## Spustenie od nuly
 
-Нужны: [uv](https://docs.astral.sh/uv/), Docker с Compose v2.
+Potrebujete: [uv](https://docs.astral.sh/uv/), Docker s Compose v2.
 
 ```bash
-cp .env.example .env        # заполнить TRAVELPAYOUTS_TOKEN и пароли
-uv sync                     # Python 3.12 + зависимости
-docker compose up -d        # postgres, kafka, kafka-ui
-docker compose ps           # все сервисы должны быть healthy
-uv run alembic upgrade head   # схемы raw/core/lake
-uv run pytest                 # тесты БД идут в временную БД на compose-Postgres
+cp .env.example .env          # doplniť TRAVELPAYOUTS_TOKEN a heslá
+uv sync                       # Python 3.12 + závislosti
+docker compose up -d          # postgres, kafka, kafka-ui
+docker compose ps             # všetky služby musia byť healthy
+uv run alembic upgrade head   # schémy raw/core/lake
+uv run pytest                 # testy DB bežia v dočasnej DB na compose Postgrese
 uv run ruff check .
 ```
 
-- Kafka UI: http://localhost:8080 (только localhost)
-- PostgreSQL: `localhost:5433` (5432 часто занят локальным Postgres), Kafka: `localhost:9092`
+- Kafka UI: http://localhost:8080 (iba localhost)
+- PostgreSQL: `localhost:5433` (5432 býva obsadený lokálnym Postgresom), Kafka: `localhost:9092`
 
-Один запуск сборщика Travelpayouts (нужен `TRAVELPAYOUTS_TOKEN` в `.env`):
+Jedno spustenie zberačov leteniek (Travelpayouts potrebuje `TRAVELPAYOUTS_TOKEN` v `.env`):
 
 ```bash
 uv run python -m krakow_di.collectors.travelpayouts
-uv run python -m krakow_di.collectors.ryanair --days 4   # без --days: весь горизонт, ~30 мин
+uv run python -m krakow_di.collectors.ryanair --days 4   # bez --days: celý horizont, ~30 min
 ```
 
-Остановить: `docker compose down` (данные сохраняются в volumes; `-v` удаляет их).
+Divadlo (program a snímky dostupnosti, `--limit N` obmedzí počet predstavení):
+
+```bash
+uv run python -m krakow_di.collectors.slowacki --months 2 --limit 8
+```
+
+Zastavenie: `docker compose down` (dáta ostanú vo volumes; `-v` ich zmaže).
