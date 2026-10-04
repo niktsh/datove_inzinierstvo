@@ -36,6 +36,13 @@ uv run python -m krakow_di.collectors.travelpayouts --publish
 uv run python tools/consume.py --from-beginning
 ```
 
+Generátor predaja leteniek (simulácia; `--fast` nečaká medzi tikmi, `--speedup X` zrýchľuje čas, `--publish` posiela udalosti do Kafky):
+
+```bash
+uv run python -m krakow_di.generator --ticks 3 --publish
+uv run python -m krakow_di.generator --ticks 288 --fast --seed 1   # simulovaný deň
+```
+
 Divadlo (program a snímky dostupnosti, `--limit N` obmedzí počet predstavení):
 
 ```bash

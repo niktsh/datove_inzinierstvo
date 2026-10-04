@@ -41,7 +41,7 @@ Zafixované verzie: Python 3.12, PostgreSQL `postgres:16.15-alpine`, Kafka `apac
 
 **Riziko:** Wizz Air je zamietnutý (kontrola „či ste človek“), nahradil ho Ryanair. Endpoint Ryanairu je neoficiálny a môže sa zatvoriť; potom záložné zdroje: Aviationstack, Amadeus Self-Service.
 
-**Hotové, keď:** stabilné spustenie zbiera ponuky na ≥5 trasách Ryanairu do KRK bez blokácie. Overené: 6 letísk, 24 dopytov, 0 chýb.
+**Hotové, keď:** stabilné spustenie zbiera ponuky na ≥5 trasách Ryanairu do KRK bez blokácie. Overené: najprv 6 letísk (24 dopytov), potom plný prechod: 14 letísk, 1260 dopytov, 0 chýb, ~34 minút.
 
 ## Fáza 4 — Zberač divadla
 - [x] Vybrať divadlo (pozri `OTVORENE_OTAZKY.md`), overiť, že predajný systém ukazuje dostupnosť miest
@@ -67,13 +67,15 @@ Zafixované verzie: Python 3.12, PostgreSQL `postgres:16.15-alpine`, Kafka `apac
 **Stav:** hotové a overené na reálnej Kafke (370 správ, 0 neplatných, 0 porušení poradia; 5 z 10 typov udalostí: `found`, `observed`, `price_changed`, `availability.snapshot`, `tickets.sold`). Typy `flight.ticket.sold`, `sold_out`, `expired` vzniknú až s generátorom (fáza 6); `theater.performance.*` sa publikujú pri behu s `--publish`, keď sa program zmení.
 
 ## Fáza 6 — Generátor predaja
-- [ ] Model z `ARCHITEKTURA.md` (kapacita, pravdepodobnosť predaja, 1–3 miesta, dynamická cena)
-- [ ] Parametre v konfigurácii; `seed` a injekcia času; režim zrýchleného času pre demo
-- [ ] Udalosti `ticket.sold`, `price_changed`, `sold_out`, `expired`
-- [ ] Testy: determinizmus pri rovnakom seede, miesta nejdú do mínusu, predaj na uplynulý let je nemožný
-- [ ] Porovnať odhad objemu (`OTVORENE_OTAZKY.md`, urobený po spiku oboch zdrojov) so skutočnými parametrami: ~10 000 leteniek = predané miesta + ponuky; udalosti počítame osobitne
+- [x] Model z `ARCHITEKTURA.md` (kapacita, pravdepodobnosť predaja, 1–3 miesta, dynamická cena)
+- [x] Parametre v konfigurácii; `seed` a injekcia času; režim zrýchleného času pre demo
+- [x] Udalosti `ticket.sold`, `price_changed`, `sold_out`, `expired`
+- [x] Testy: determinizmus pri rovnakom seede, miesta nejdú do mínusu, predaj na uplynulý let je nemožný
+- [x] Porovnať odhad objemu (`OTVORENE_OTAZKY.md`, urobený po spiku oboch zdrojov) so skutočnými parametrami: ~10 000 leteniek = predané miesta + ponuky; udalosti počítame osobitne
 
 **Hotové, keď:** za hodinu zrýchleného režimu vznikne vierohodný tok predajov.
+
+**Stav:** hotové a overené: 16 testov modelu a enginu (determinizmus, invarianty, prahy cien, `sold_out`/`expired`, zrýchlený čas); simulácia na kópii reálnych dát dala ~2 400 predajov denne (~3 800 miest). Generátor beží aj na pracovnej DB v reálnom čase (`uv run python -m krakow_di.generator --publish`) a jeho udalosti idú do Kafky.
 
 ## Fáza 7 — API a brána streamu
 - [ ] FastAPI: REST pre ponuky, históriu, predaje, divadlo, žurnál udalostí (stránkovanie, filtre)

@@ -15,8 +15,8 @@ Formát: otázka → stav → rozhodnutie/kto rozhoduje. Uzavreté otázky nemaz
 - [ ] Zoznam letísk odletu (≥10) → `config/routes.yaml`
 - [ ] Horizont dátumov: 90 dní?
 - [x] ✅ Mena: letenky pýtame v EUR; divadlo (PLN) sa ukladá v origináli + `price_eur` podľa kurzu ECB v deň snímky (rozhodnutie používateľa: ceny majú byť v eurách)
-- [ ] Parametre generátora: dĺžka tiku, základná pravdepodobnosť predaja
-- [ ] **Odhad objemu 10 000** (letenky = predané miesta + ponuky; udalosti osobitne): urobiť **po spiku oboch zdrojov, pred fázou 6**.
+- [x] ✅ Parametre generátora: tik 5 minút, `base_rate` 0,004, sigma popularity 1,0 (nastaviteľné cez `.env`). Cieľom je viac ako 10 000 leteniek (viac dát je lepšie), pozri „Odhad objemu“.
+- [x] ✅ **Odhad objemu 10 000** (letenky = predané miesta + ponuky; udalosti osobitne), urobený 2026-10-04 po plnom behu oboch zdrojov; pozri „Odhad objemu“ nižšie. Parametre generátora sa ešte rozhodnú vo fáze 6.
 - [ ] Kde hostujeme
 - [x] ✅ Mesto: Kraków (KRK)
 - [x] ✅ Zdroje leteniek: Travelpayouts + Ryanair (Wizz Air zamietnutý: interaktívna kontrola „či ste človek“)
@@ -31,6 +31,13 @@ Formát: otázka → stav → rozhodnutie/kto rozhoduje. Uzavreté otázky nemaz
 - [x] ✅ Protokol streamu: Apache Kafka (KRaft) + SSE/WebSocket/REST ako doplnkové kanály
 - [x] ✅ Všetky súbory projektu (dokumentácia, komentáre, správy logov, konfigurácia) sú v slovenčine; identifikátory, názvy testov a hodnoty udalostí zostávajú anglicky; názvy commitov sú v slovenčine
 - [ ] Hosting musí umožniť otvoriť port pre Kafku navonok (SASL_SSL). Overiť na Hrone/ÚVT.
+
+## Odhad objemu (2026-10-04)
+- **Ponuky:** v DB je 1533 ponúk (Ryanair 1193 z 14 letísk, Travelpayouts 340 z 15 letísk); horizont sa posúva, takže denne pribudne približne 17 nových (≈13 Ryanair + ≈4 Travelpayouts). Do polovice semestra (~6 týždňov) to bude ~2200, na konci semestra ~2900 ponúk.
+- **Kapacita:** pri priemernej kapacite 190 miest (180–230) je dnešných 1533 ponúk ≈ 290 000 miest. Cieľ 10 000 „leteniek“ (predané miesta + ponuky) preto vyžaduje obsadenosť iba ≈ 3 % z celkovej kapacity, čiže 8 000–10 000 predaných miest po odpočítaní ponúk.
+- **Predaje (zmerané simuláciou, 2026-10-04):** pôvodný hrubý odhad (~100 predajov denne) bol príliš nízky. Simulácia generátora na kópii reálnych 1533 ponúk (`base_rate` 0,004, 2 simulované dni, seed 1) dala **~2 400 predajov denne (~3 800 predaných miest)**, v priemere 1,6 miesta na predaj, ~30 zmien ceny a ~12 vypredaných ponúk denne. 10 000 predaných miest je teda hotových za ~2,6 dňa a za semester vychádza rádovo 100–200 tisíc miest (rádovo desiatky percent celkovej kapacity). Objem sa dá znížiť alebo zvýšiť parametrom `GENERATOR_BASE_RATE`.
+- **Udalosti:** `flight.offer.observed` sa posiela pri každom zbere: pri 2 zberoch denne u Ryanairu a 4 u Travelpayouts ≈ 3 800 udalostí denne, spolu desaťtisíce až státisíce. Počet udalostí je teda o rád väčší ako počet „leteniek“, čo je v súlade s rozlíšením v zadaní.
+- **Rozhodnutie pre fázu 6:** generátor s náhodnou popularitou ponúk (lognormálne rozdelenie so seedom): väčšina ponúk sa predáva málo, malá časť výrazne, takže sa spúšťajú aj cenové prahy 50/75/90 %. Pri predvolenom `base_rate` je objem desiatky tisíc predaných miest za týždne; používateľ chce radšej viac dát než menej.
 
 ## Poznámky k zdrojom (dopĺňať priebežne)
 - Travelpayouts (overené 2026-10-03, `market=sk`, `currency=eur`, v3 `prices_for_dates`, `one_way=true`):
@@ -48,6 +55,7 @@ Formát: otázka → stav → rozhodnutie/kto rozhoduje. Uzavreté otázky nemaz
   - Dostupné letiská: ARN BCN BGY CPH CRL DUB EIN LTN MAD MLA STN TRF VIE (13). FCO, OSL, BRU nie sú u Ryanairu trasy do KRK.
   - Prekrytie s Travelpayouts: obidva ukazujú lety FR. Rôzne zdroje dávajú rôzne `offer_id`, takže obsahové duplicity sú prípustné.
   - Odhad objemu: do ~1000 ponúk Ryanairu za 90 dní plus ~300 Travelpayouts.
+  - **Plný prechod (2026-10-04, 16:10–16:44, ~34 min):** 14 letísk (aj CIA Rím Ciampino, ktoré je v kandidátoch) × 90 dní = 1260 dopytov, 0 chýb, 74 prázdnych dní, 1186 ponúk (1172 nových, 11 so zmenou ceny, 3 nezmenené). Ryanair nás neblokoval a nevrátil 429. Odhad: pri pauze 1,5 s trvá prechod ~34 minút, takže raz za 12 hodín je bezpečné.
 - Divadlo: Teatr im. J. Słowackiego (overené 2026-10-04, reálny beh: 2 mesiace programu, 70 predstavení, 8 snímok, 0 chýb). Podrobnosti: `docs/zdroje/divadlo.md`.
   - Vypredané predstavenia sú v programe zobrazené bez odkazu na pokladňu („Bilety do teatru wyprzedane“); ukladáme ich ako `sold_out` (zo 70 nájdených je 24 vypredaných).
   - Preskakujeme: cudzie podujatia (vstupenky na inom webe, napr. goingapp.pl) a uzavreté predstavenia („Spektakl zarezerwowany“): dostupnosť miest u nich nie je vidno. Je to vedomé rozhodnutie.

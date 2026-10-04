@@ -78,7 +78,7 @@ Rovnaké `data` ako pri `offer.found`. Posiela sa pri každom zbere, aj keď sa 
   "sold_at": "2026-10-14T09:31:05Z"
 }
 ```
-Zámerne denormalizované: konzument nemusí poznať `offer.found`, aby pochopil predaj.
+Zámerne denormalizované: konzument nemusí poznať `offer.found`, aby pochopil predaj. `unit_price` je predajná cena v čase predaja (cena zo zdroja × prirážka podľa obsadenosti), preto sa môže líšiť od `price` v `flight.offer.observed` (cena zo zdroja); rozdiel vysvetľujú udalosti `flight.offer.price_changed` s `reason=load_factor`.
 
 ### `flight.offer.sold_out`
 ```json

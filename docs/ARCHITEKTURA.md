@@ -61,12 +61,14 @@ Zoznam letísk odletu je v `config/routes.yaml` (Travelpayouts) a `config/routes
 
 Beží v tikoch (predvolene každých 5 min; existuje režim „zrýchleného času“ pre demo).
 
-- Každej ponuke sa pri prvom výskyte priradí **simulovaná kapacita** (`seats_total`, napr. 180–230 pre A320/A321) a počiatočná obsadenosť.
-- V každom tiku: pravdepodobnosť predaja `p = base_rate × f(dni_do_odletu) × g(cena_voči_mediánu_trasy)`, pričom `f` rastie k dátumu odletu.
+- Každej ponuke sa pri prvom výskyte priradí **simulovaná kapacita** (`seats_total`: 180, 186, 189, 195, 215 alebo 230 miest, najčastejšie 189) a počiatočná obsadenosť (tá sa nepočíta ako predaj, je to stav pred naším prvým pozorovaním).
+- Každá ponuka má náhodnú **popularitu** (lognormálne rozdelenie so `seed`om, parameter `GENERATOR_POPULARITY_SIGMA`): väčšina ponúk sa predáva málo, malá časť výrazne, takže sa spúšťajú aj cenové prahy.
+- V každom tiku: pravdepodobnosť predaja `p = base_rate × popularita × f(dni_do_odletu) × g(cena_voči_mediánu_trasy)`, pričom `f = 0,25 + 2·exp(−dni/25)` rastie k dátumu odletu a `g = medián/cena` (obmedzené na 0,4–2,5) je vyššie pri lacnejšej ponuke. `base_rate` (`GENERATOR_BASE_RATE`, predvolene 0,004) je pravdepodobnosť na 5-minútový tik a škáluje celkový objem.
 - Predaj: 1–3 miesta (jedna ponuka sa predáva viackrát).
-- Dynamická cena: pri prekročení prahov obsadenosti (50 %, 75 %, 90 %) cena rastie o 3–12 % → udalosť `price_changed`.
+- Dynamická cena: pri prekročení prahov obsadenosti (50 %, 75 %, 90 %) cena rastie o 3–12 % → udalosť `price_changed` (`reason=load_factor`). Cena zo zdroja (`core.flight_offer.price`) ostáva tak, ako ju zberač zistil; prirážka generátora je osobitne v `price_markup` (≥ 1) a predajná cena je `price × price_markup`. Vďaka tomu zber neprepisuje generátor a naopak (v `flight.offer.observed` je cena zo zdroja, v `flight.ticket.sold` predajná cena).
 - `seats_left == 0` → `sold_out`; odlet uplynul → `expired`.
-- Determinizmus pre testy: `seed` a injekcia času.
+- Determinizmus pre testy: `seed` a injekcia času. Náhodnosť sa odvodzuje zo seedu a id ponuky/času, nie z poradia spracovania: rovnaký seed + rovnaký stav DB + rovnaké časy = rovnaké udalosti.
+- Zrýchlený čas: pri `speedup` X simuluje jeden reálny tik `tick-seconds × X` sekúnd, rozdelených na 5-minútové podtiky. `--fast` nečaká medzi tikmi.
 - Generátor sa **nedotýka** surových dát, iba `core.flight_offer` a `core.ticket_sale`.
 
 ### 3. Kafka a publisher (`publisher/`)

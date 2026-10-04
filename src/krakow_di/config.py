@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     generator_tick_seconds: int = 300
     generator_seed: int | None = None
     generator_time_speedup: float = 1.0
+    generator_base_rate: float = 0.004
+    generator_popularity_sigma: float = 1.0
 
     producer_id: str = "tuke-di-krakow"
 
