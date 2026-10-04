@@ -1,0 +1,4 @@
+# Jednotné koncovky riadkov: LF aj pri práci cez Windows git (core.autocrlf=true), inak by sa
+# shell skripty (deploy/*.sh, scripts/*.sh) v Linux kontajneroch pokazili (#!/bin/sh^M).
+* text=auto eol=lf
+*.sh text eol=lf

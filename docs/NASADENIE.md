@@ -39,7 +39,7 @@ Ak ÚVT porty neotvorí alebo odpoveď potrvá dlho, použite bežný VPS s rovn
    - `KAFKA_SSL_PASSWORD`: heslo ku keystore,
    - `API_DOMAIN`: doména pre HTTPS (`:80` = iba HTTP),
    - `TRAVELPAYOUTS_TOKEN`, prípadne `GENERATOR_*` a `SCHEDULER_*`.
-3. **Certifikát pre Kafku:** `scripts/gen_kafka_tls.sh kafka.example.org [IP]`. Vznikne `deploy/certs/ca.crt` (**tento súbor dostanú ostatné tímy**, aby dôverovali nášmu certifikátu) a `kafka.keystore.p12`. Namiesto vlastnej CA môžete dodať certifikát od verejnej CA ako PKCS12 keystore s rovnakým názvom.
+3. **Certifikát pre Kafku:** `sh scripts/gen_kafka_tls.sh kafka.example.org [IP]`. Vznikne `deploy/certs/ca.crt` (**tento súbor dostanú ostatné tímy**, aby dôverovali nášmu certifikátu) a `kafka.keystore.p12`. Namiesto vlastnej CA môžete dodať certifikát od verejnej CA ako PKCS12 keystore s rovnakým názvom.
 4. **Firewall:** povoľte iba `80`, `443`, `9094` (a SSH).
 5. **Spustenie:**
    ```bash
@@ -83,7 +83,7 @@ Overené lokálne (2026-10-04, `docker compose -p krakowprod`, vlastná CA pre `
 ## Riešenie problémov
 
 - **Klient sa pripojí ku Kafke, ale nič nečíta / časový limit:** takmer vždy zlé `KAFKA_EXTERNAL_HOST` (broker ohlasuje adresu, ktorá z vonka neplatí) alebo zatvorený port 9094. Meno musí byť verejné a rovnaké ako v certifikáte.
-- **`SSL handshake` / `certificate verify failed`:** klient nemá `ca.crt` (alebo certifikát nemá meno servera v SAN: znova `scripts/gen_kafka_tls.sh <meno> [IP]` a reštart brokera).
+- **`SSL handshake` / `certificate verify failed`:** klient nemá `ca.crt` (alebo certifikát nemá meno servera v SAN: znova `sh scripts/gen_kafka_tls.sh <meno> [IP]` a reštart brokera).
 - **`SaslAuthenticationFailed`:** zlé heslo; heslo sa zmení úpravou `KAFKA_TEAMS_PASSWORD` a `docker compose -f docker-compose.prod.yml up -d kafka-init`.
 - **Broker nenaštartuje (`controller.listener.names must contain...`):** `KAFKA_LISTENERS` musí byť v `docker-compose.prod.yml` zadané výslovne (obraz inak odvodí listenery len z advertised).
 - **Nedostatok pamäte:** znížte `KAFKA_HEAP_OPTS` (napr. `-Xms256m -Xmx512m`) alebo nepoužívajte `kafka-ui`.

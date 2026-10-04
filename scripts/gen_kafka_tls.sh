@@ -1,6 +1,6 @@
 #!/bin/sh
 # Vygeneruje vlastnú CA a serverový certifikát pre externý listener Kafky (SASL_SSL).
-#   scripts/gen_kafka_tls.sh kafka.example.org [IP]
+#   sh scripts/gen_kafka_tls.sh kafka.example.org [IP]
 # Výstup v deploy/certs/: ca.crt (tento súbor dajte ostatným tímom), kafka.keystore.p12 (pre broker).
 # Pri verejnom nasadení môžete použiť aj certifikát od bežnej CA; stačí dodať PKCS12 keystore.
 set -eu
