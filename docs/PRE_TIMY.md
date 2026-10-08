@@ -3,7 +3,7 @@
 Tím **Kraków DI** (TUKE) publikuje dva druhy dát:
 
 - **Letenky do Krakova (KRK)**: reálne ponuky z Travelpayouts a Ryanairu. **Predaje leteniek a počet miest sú simulované** generátorom (označené `seats_simulated: true`, `source: generator`).
-- **Divadlo Teatr im. J. Słowackiego**: reálny program, ceny, dostupnosť miest a reálne predaje (zistené z rozdielu snímok). Ceny sú v PLN aj v EUR.
+- **Divadlo Teatr im. J. Słowackiego**: reálny program, ceny a dostupnosť miest. Udalosť `theater.tickets.sold` má dva druhy: **reálne predaje** zistené z rozdielu snímok (`source: theater`, `simulated: false`) a **simulované predaje** generátora (`source: generator`, `simulated: true`). Ceny sú v PLN aj v EUR.
 
 | Kanál | Na čo | Adresa |
 |---|---|---|
@@ -204,7 +204,7 @@ Zoznamové odpovede majú tvar `{"items": [...], "total": N, "limit": L, "offset
 
 - **Ceny leteniek** sú v EUR. `price` v `flight.offer.*` je cena zo zdroja; `unit_price` v `flight.ticket.sold` je predajná cena v čase predaja (cena zo zdroja × prirážka podľa obsadenosti), rozdiel vysvetľujú udalosti `flight.offer.price_changed` s `reason: load_factor`.
 - **Počet miest a predaje leteniek sú simulácia**; v ponukách je `seats_simulated: true`. Kým generátor ponuke nepriradí kapacitu, sú `seats_total`/`seats_left` `null`.
-- **Divadlo:** `price` je v PLN, `price_eur` je prepočet podľa kurzu ECB z `fx_rate` (PLN za 1 EUR). Záporné `quantity` v `theater.tickets.sold` znamená vrátenie miest (aj dočasné uvoľnenie z cudzieho košíka).
+- **Divadlo:** `price` je v PLN, `price_eur` je prepočet podľa kurzu ECB z `fx_rate` (PLN za 1 EUR). Simulované predaje (`simulated: true`) sú vždy kladné. Záporné `quantity` v `theater.tickets.sold` znamená vrátenie miest (aj dočasné uvoľnenie z cudzieho košíka).
 - **Časy:** `occurred_at` je UTC (`...Z`); `departure_at` a `starts_at` majú posun miestneho času.
 - **Verzie:** pridanie nepovinného poľa nemení `event_version`; zmenu, ktorá láme kompatibilitu, publikujeme ako novú verziu a starú ponecháme paralelne aspoň 2 týždne.
 

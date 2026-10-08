@@ -14,6 +14,19 @@ sources:
     topics_regex: '^krakow\..*'
     group_id: lake-self
 
+  # Tím 7 (verejné GET, bez prihlasovania): letenky cez SSE, divadlo cez REST.
+  # Popis ich rozhrania: docs/timy/team_7.md
+  - team: team_7
+    type: custom
+    class: krakow_di.lake.adapters.team_7:Team7SseAdapter
+    url: https://university-data-api.artur-yevdokymov.workers.dev/api/stream?limit=100
+  - team: team_7
+    type: custom
+    class: krakow_di.lake.adapters.team_7:Team7RestAdapter
+    url: https://university-data-api.artur-yevdokymov.workers.dev/api/theatre
+    interval_seconds: 3600
+    page_size: 1000
+
   # --- Ukážky pre cudzie tímy (zapnúť po doplnení ich rozhrania) -----------------------------
   # - team: team_03
   #   type: kafka

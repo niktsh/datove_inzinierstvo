@@ -69,5 +69,5 @@ Pre každý adaptér treba test na zaznamenaných vzorkách ich správ (`tests/`
 
 ## Stav tímov
 
-Zatiaľ máme len adaptér vlastných udalostí. Adaptéry ostatných tímov pribudnú, keď zverejnia svoje
+Hotové: adaptér vlastných udalostí a tím `team_7` ([popis](team_7.md)). Adaptéry ostatných tímov pribudnú, keď zverejnia svoje
 rozhrania (protokol, adresa, formát): každý tím si svoje rozhranie navrhuje sám, bez koordinácie.
