@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     generator_time_speedup: float = 1.0
     generator_base_rate: float = 0.004
     generator_popularity_sigma: float = 1.0
+    generator_theater_base_rate: float = 0.005
 
     # Plánovač (intervaly v hodinách; generátor beží každých generator_tick_seconds)
     scheduler_travelpayouts_hours: float = 6

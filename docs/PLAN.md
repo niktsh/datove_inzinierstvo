@@ -99,7 +99,7 @@ Zafixované verzie: Python 3.12, PostgreSQL `postgres:16.15-alpine`, Kafka `apac
 **Stav:** infraštruktúra je hotová a otestovaná (15 testov vrátane reálnej Kafky): writer, univerzálne adaptéry `kafka`/`sse`/`ws`/`rest`, `type: custom` pre vlastné adaptéry tímov, runner s reštartom a backoffom, adaptér vlastných udalostí (na pracovnej DB uložených 428 správ bez duplicít), `tools/lake_stats.py`, postup v `docs/timy/README.md`. **Nesplnené:** adaptéry cudzích tímov a kritérium „dáta aspoň od 2 cudzích tímov“, lebo ostatné tímy zatiaľ nezverejnili svoje rozhrania (každý tím si ho navrhuje sám); pridajú sa cez `/novy-tim` alebo záznamom v `config/lake_sources.yaml`.
 
 ## Fáza 9 — Nasadenie
-- [ ] Server (Hron/ÚVT alebo VPS): **nezískaný** (vyžaduje žiadosť do ÚVT alebo prenájom VPS; text žiadosti a požiadavky sú v `docs/NASADENIE.md`)
+- [ ] Server (Hron/ÚVT alebo VPS): **nezískaný** (vyžaduje žiadosť do ÚVT, prenájom VPS alebo bezplatný skúšobný kredit Google Cloud; požiadavky a postup sú v `docs/NASADENIE.md`)
 - [x] Docker compose pre produkciu (`docker-compose.prod.yml`, `Dockerfile`), reverse proxy Caddy s automatickým HTTPS (HTTP overené lokálne, HTTPS s verejnou doménou čaká na server)
 - [x] Kafka EXTERNAL listener: SASL_SSL + SCRAM-SHA-512, `advertised.listeners` z `KAFKA_EXTERNAL_HOST`, certifikát (`scripts/gen_kafka_tls.sh`)
 - [x] Používateľ `teams` + ACL: READ na topiky `krakow.*` a skupiny `team-*`; **zápis zakázaný, overené** (`tools/check_external.py`)
@@ -110,6 +110,17 @@ Zafixované verzie: Python 3.12, PostgreSQL `postgres:16.15-alpine`, Kafka `apac
 **Hotové, keď:** systém beží deň bez zásahu.
 
 **Stav:** všetko, čo sa dá urobiť a overiť bez servera, je hotové a otestované lokálne (postup a výsledky: `docs/NASADENIE.md`). **Nesplnené:** získanie servera, kontrola zvonku a kritérium „deň bez zásahu“.
+
+---
+
+## Fáza 10 — Generátor divadla (pokyn vyučujúceho)
+- [x] Migrácia `0005`: `core.theater_sale.source` (`observed` | `generator`), jedna tabuľka pre reálne aj simulované predaje
+- [x] `generator/theater.py` + parametre modelu, `GENERATOR_THEATER_BASE_RATE`, `python -m krakow_di.generator --domain theater`
+- [x] Úloha `theater_generator` v plánovači; `theater.tickets.sold` s `simulated`, `source=generator` (schéma, REST filter `source`)
+- [x] Testy: determinizmus, miesta nejdú do mínusu, žiadne predaje bez snímky alebo po termíne
+- [ ] Nasadenie na server (`git pull && docker compose -f docker-compose.prod.yml up -d --build`)
+
+**Hotové, keď:** na serveri pribúdajú `theater.tickets.sold` so `simulated=true` a reálne predaje sa od nich dajú oddeliť.
 
 ---
 

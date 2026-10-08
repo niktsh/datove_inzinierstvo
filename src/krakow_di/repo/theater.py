@@ -39,6 +39,7 @@ class Sale:
     fx_rate: Decimal | None
     detected_from: datetime
     detected_to: datetime
+    source: Literal["observed", "generator"] = "observed"
 
 
 def upsert_performance(
@@ -170,8 +171,8 @@ def insert_snapshot(
 def insert_sale(conn: psycopg.Connection, s: Sale) -> None:
     conn.execute(
         "INSERT INTO core.theater_sale (sale_id, performance_id, category, quantity, unit_price, "
-        "currency, unit_price_eur, fx_rate, detected_from, detected_to) "
-        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+        "currency, unit_price_eur, fx_rate, detected_from, detected_to, source) "
+        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
         (s.sale_id, s.performance_id, s.category, s.quantity, s.unit_price, s.currency,
-         s.unit_price_eur, s.fx_rate, s.detected_from, s.detected_to),
+         s.unit_price_eur, s.fx_rate, s.detected_from, s.detected_to, s.source),
     )

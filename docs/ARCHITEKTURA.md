@@ -71,6 +71,10 @@ Beží v tikoch (predvolene každých 5 min; existuje režim „zrýchleného č
 - Zrýchlený čas: pri `speedup` X simuluje jeden reálny tik `tick-seconds × X` sekúnd, rozdelených na 5-minútové podtiky. `--fast` nečaká medzi tikmi.
 - Generátor sa **nedotýka** surových dát, iba `core.flight_offer` a `core.ticket_sale`.
 
+#### Generátor divadla (`generator/theater.py`)
+
+Rovnaký rytmus (5 min), seed a injekcia času ako pri letenkách. Je to **simulovaná vrstva nad reálnymi snímkami**: pre budúce predstavenia so stavom `on_sale` vezme najnovšiu snímku, od voľných miest odpočíta už simulované predaje od tej snímky a s pravdepodobnosťou `p = base_rate × popularita × f(dni do predstavenia)` (`f = 0,25 + 2·exp(−dni/14)`, `GENERATOR_THEATER_BASE_RATE`, predvolene 0,005 na predstavenie a tik) „predá“ 1–4 miesta v kategórii vybranej úmerne počtu voľných miest. Zapíše riadok do `core.theater_sale` so `source='generator'` a vydá `theater.tickets.sold` s `source=generator`, `simulated=true`. Reálne predaje majú `source='observed'` v tej istej tabuľke a rovnakom type udalosti (jedna tabuľka, aby dáta v data lake a warehouse nebolo treba spájať). Snímky ani surové dáta sa generátor nedotýka, takže detekcia reálnych predajov ostáva nezmenená. Po novej reálnej snímke sa počítanie simulovaných miest začína odznova.
+
 ### 3. Kafka a publisher (`publisher/`)
 
 **Broker:** Apache Kafka 4.1.0 v režime **KRaft** (bez ZooKeepera), jeden broker v docker compose (oficiálny image `apache/kafka`). Na prezeranie slúži webové rozhranie `kafbat/kafka-ui`.
@@ -130,7 +134,7 @@ Pre tímy, ktorým je Kafka klient nepohodlný:
 - `core.ticket_sale(sale_id PK, offer_id, quantity, unit_price, total_price, currency, sold_at)`
 - `core.theater_performance(performance_id PK, title, stage, starts_at, url NULL, status, repertoire_id NULL, instance_id NULL, location NULL, first_seen_at, last_seen_at)` — `performance_id` = slug pokladne (alebo odvodený pre vypredané), `instance_id` = stabilné id predstavenia na webe divadla, `repertoire_id` = id v predajnom systéme (mapa sály)
 - `core.theater_snapshot(id, performance_id, observed_at, category, price, currency, seats_available, price_eur NULL, fx_rate NULL)`
-- `core.theater_sale(sale_id PK, performance_id, category, quantity, unit_price, currency, unit_price_eur NULL, fx_rate NULL, detected_from, detected_to)` — `quantity < 0` = vrátenie
+- `core.theater_sale(sale_id PK, performance_id, category, quantity, unit_price, currency, unit_price_eur NULL, fx_rate NULL, detected_from, detected_to, source)` — `quantity < 0` = vrátenie; `source`: `observed` (reálny, zo snímok) | `generator` (simulovaný)
 - `core.fx_rate(rate_date, currency, per_eur, fetched_at)` — kurzy ECB (1 EUR = N jednotiek meny), aktualizujú sa raz denne podľa potreby
 - `core.event_log(event_id PK, seq, event_type, topic, occurred_at, payload jsonb, published_at NULL)` — všetko publikované (pre REST a `Last-Event-ID`); `seq` určuje poradie odoslania, `published_at IS NULL` = ešte neodoslané
 

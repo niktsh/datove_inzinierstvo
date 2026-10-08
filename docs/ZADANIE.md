@@ -17,7 +17,7 @@ Zdroj: poznámky z cvičenia + správy vyučujúceho (Ján Genči) v Teams. Neup
 - Iba **jedným smerom** (prílet do Krakova).
 - Objem: minimálne **~10 letov/trás**. Orientačne **~10 000 leteniek** = predané miesta + ponuky (počítame osobitne od počtu **udalostí**: udalosti sú správy v streame vrátane `offer.observed`, ich bude viac).
 - Každú nájdenú ponuku ukladáme.
-- **Generátor udalostí je povinný.** Sami rozhodujeme, že letenka je „predaná“, a **oznamujeme to na vlastnom rozhraní**:
+- **Generátor udalostí je povinný** (podľa pokynu vyučujúceho aj pre divadlo, pozri nižšie). Sami rozhodujeme, že letenka je „predaná“, a **oznamujeme to na vlastnom rozhraní**:
   ktorá letenka, za akú cenu, kedy (a ďalšie údaje podľa nášho uváženia).
 - Jedna ponuka sa môže predať viackrát (zo zápisu: „môžeme ju kúpiť 3-krát“).
 - Predané letenky ukladáme aj lokálne.
@@ -26,7 +26,8 @@ Zdroj: poznámky z cvičenia + správy vyučujúceho (Ján Genči) v Teams. Neup
 
 - Ceny zverejňujeme **v eurách**: pokladňa divadla predáva v PLN, preto uchovávame originál (`price`, `currency=PLN`) a pridávame `price_eur` podľa kurzu ECB v deň snímky. Pri zberačoch leteniek si ceny pýtame rovno v EUR.
 
-- **100 % reálne dáta**: inscenácie, ceny, dostupnosť vstupeniek.
+- **Generátor predaja vstupeniek je povinný** (pokyn vyučujúceho): simulované predaje oznamujeme na vlastnom rozhraní. Pôvod je vždy označený (`source=generator`, `simulated=true`), reálne predaje zo snímok ostávajú osobitne rozlíšiteľné.
+- **100 % reálne dáta**: inscenácie, ceny, dostupnosť vstupeniek (snímky). Simulovaný je iba predaj z generátora.
 - Sledujeme **celé divadlo** (všetky inscenácie v jeho programe).
 - Nebrať udalosti, ktoré sa vypredajú za pár minút.
 

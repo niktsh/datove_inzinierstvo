@@ -69,6 +69,17 @@ def _performance_data(p) -> dict:
     }
 
 
+def theater_sale_data(sale) -> dict:
+    """Telo `theater.tickets.sold` pre reálny (zo snímok) aj simulovaný (generátor) predaj."""
+    return {
+        "performance_id": sale.performance_id, "category": sale.category,
+        "quantity": sale.quantity, "unit_price": _f(sale.unit_price),
+        "currency": sale.currency, "unit_price_eur": _f(sale.unit_price_eur),
+        "fx_rate": _f(sale.fx_rate), "simulated": sale.source == "generator",
+        "detected_between": [iso_utc(sale.detected_from), iso_utc(sale.detected_to)],
+    }
+
+
 def theater_events(run: TheaterRun, producer: str, observed_at) -> list[dict]:
     """Programa (found/updated), snímky dostupnosti a zistené predaje z jedného behu zberača."""
     events: list[dict] = []
@@ -94,12 +105,6 @@ def theater_events(run: TheaterRun, producer: str, observed_at) -> list[dict]:
         ))
     for sale in run.sales:
         events.append(make_event(
-            "theater.tickets.sold", "theater",
-            {"performance_id": sale.performance_id, "category": sale.category,
-             "quantity": sale.quantity, "unit_price": _f(sale.unit_price),
-             "currency": sale.currency, "unit_price_eur": _f(sale.unit_price_eur),
-             "fx_rate": _f(sale.fx_rate),
-             "detected_between": [iso_utc(sale.detected_from), iso_utc(sale.detected_to)]},
-            sale.detected_to, producer,
+            "theater.tickets.sold", "theater", theater_sale_data(sale), sale.detected_to, producer,
         ))
     return events

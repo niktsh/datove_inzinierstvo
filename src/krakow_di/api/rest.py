@@ -144,11 +144,18 @@ async def performance_snapshots(
 
 
 @router.get("/theater/sales", tags=["divadlo"],
-            summary="Reálne predaje zistené z rozdielu snímok (záporné množstvo = vrátenie)")
+            summary="Predaje vstupeniek: reálne (zo snímok) aj simulované (záporné = vrátenie)")
 async def theater_sales(
-    request: Request, performance_id: str | None = None, limit: Limit = 50, offset: Offset = 0
+    request: Request,
+    performance_id: str | None = None,
+    source: str | None = Query(None, description="observed (reálne) | generator (simulované)"),
+    limit: Limit = 50,
+    offset: Offset = 0,
 ):
     clauses, params = [], []
+    if source:
+        clauses.append("source = %s")
+        params.append(source)
     if performance_id:
         clauses.append("performance_id = %s")
         params.append(performance_id)

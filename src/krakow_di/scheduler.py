@@ -22,7 +22,8 @@ from krakow_di.db import connect
 from krakow_di.events.builders import offer_events, theater_events
 from krakow_di.events.publisher import publish_events
 from krakow_di.generator.engine import Generator
-from krakow_di.generator.model import ModelParams
+from krakow_di.generator.model import ModelParams, TheaterParams
+from krakow_di.generator.theater import TheaterGenerator
 from krakow_di.routes import load_routes
 
 log = logging.getLogger("krakow_di.scheduler")
@@ -104,10 +105,26 @@ class GeneratorJob:
         with connect(self.settings.database_url) as conn:
             res = self.generator.run_interval(conn, start, seconds)
             self.last = now
-            out = (f"nové ponuky {res.initialized}, predaje {res.sales} ({res.seats_sold} miest), "
-                   f"zmeny ceny {res.price_changes}, vypredané {res.sold_out}, "
-                   f"vypršané {res.expired}; ")
-            return out + _publish(conn, res.events, self.settings, self.publish)
+            return self._summary(res) + _publish(conn, res.events, self.settings, self.publish)
+
+    def _summary(self, res) -> str:
+        return (f"nové ponuky {res.initialized}, predaje {res.sales} ({res.seats_sold} miest), "
+                f"zmeny ceny {res.price_changes}, vypredané {res.sold_out}, "
+                f"vypršané {res.expired}; ")
+
+
+@dataclass
+class TheaterGeneratorJob(GeneratorJob):
+    """Simulovaný predaj vstupeniek do divadla (rovnaký rytmus ako generátor leteniek)."""
+
+    def __post_init__(self) -> None:
+        s = self.settings
+        self.generator = TheaterGenerator(
+            TheaterParams(s.generator_theater_base_rate, s.generator_popularity_sigma),
+            s.generator_seed, s.producer_id)
+
+    def _summary(self, res) -> str:
+        return f"predaje {res.sales} ({res.seats_sold} miest); "
 
 
 def build_jobs(settings: Settings, publish: bool = True) -> dict[str, Job]:
@@ -115,6 +132,8 @@ def build_jobs(settings: Settings, publish: bool = True) -> dict[str, Job]:
     return {
         "generator": Job("generator", settings.generator_tick_seconds,
                          GeneratorJob(settings, publish), 5),
+        "theater_generator": Job("theater_generator", settings.generator_tick_seconds,
+                                 TheaterGeneratorJob(settings, publish), 7),
         "theater_snapshots": Job(
             "theater_snapshots", settings.scheduler_theater_snapshots_hours * h,
             lambda: theater_job(settings, True, publish), 60),

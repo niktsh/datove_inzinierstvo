@@ -122,7 +122,7 @@ Zámerne denormalizované: konzument nemusí poznať `offer.found`, aby pochopil
 ```
 Kategóriu určuje dvojica `(category, price)`: jedno predstavenie môže mať dve kategórie „Normalny“ s rôznou cenou. `price` je v mene pokladne (PLN), `price_eur` podľa kurzu ECB `fx_rate` (PLN za 1 EUR); ak kurz nie je k dispozícii, `price_eur` aj `fx_rate` sú `null`.
 
-### `theater.tickets.sold` — **reálne** predaje vypočítané z rozdielu snímok
+### `theater.tickets.sold` — predaje vstupeniek: **reálne** (rozdiel snímok) aj **simulované** (generátor)
 ```json
 {
   "performance_id": "krakow-narodowej-sztuce-czyli-tryumf-miernoty-2026-10-27-19-00",
@@ -132,9 +132,11 @@ Kategóriu určuje dvojica `(category, price)`: jedno predstavenie môže mať d
   "currency": "PLN",
   "unit_price_eur": 27.41,
   "fx_rate": 4.3775,
+  "simulated": false,
   "detected_between": ["2026-10-14T08:00:01Z", "2026-10-14T12:00:03Z"]
 }
 ```
+`simulated` (nepovinné, `false`/chýba = reálny predaj): `true` ju vydal generátor, v envelope je vtedy `source = "generator"` (reálny predaj má `source = "theater"`). Simulované predaje sú vždy kladné, `quantity` 1–4, a nikdy nepresiahnu počet voľných miest z poslednej reálnej snímky; `detected_between` je interval jedného tiku generátora. Reálnu a simulovanú vrstvu rozlíši konzument podľa `simulated` alebo `source`.
 Predaj sa eviduje s presnosťou na interval medzi snímkami. Ak miest pribudlo (vrátenie), `quantity` je záporné. Miesto, ktoré dočasne drží cudzí košík, vyzerá ako predané a neskôr ako vrátené; pri intervale 2–6 hodín sa to do snímky dostane zriedka. Prvá snímka predstavenia je iba základná: predaje sa podľa nej nepočítajú.
 
 ## Topiky Kafky

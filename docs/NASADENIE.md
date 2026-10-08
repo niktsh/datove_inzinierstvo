@@ -23,10 +23,6 @@ Všetko potrebné je v repozitári: [`docker-compose.prod.yml`](../docker-compos
 
 **Otvorené porty zvonku:** `80` a `443` (API, Caddy) a `9094` (Kafka SASL_SSL). Nič iné (najmä nie `5432`, `19092`, `8080`).
 
-### Žiadosť pre ÚVT (Hron)
-
-> Dobrý deň, pre predmet Dátové inžinierstvo (TUKE) potrebujeme server pre projekt „Kraków DI“ (zber dát o letenkách a divadle, streaming cez Apache Kafka, data lake). Požiadavky: 2 vCPU, 4 GB RAM, 50–100 GB disk, Docker + Docker Compose, verejná IPv4 adresa (alebo DNS meno) a možnosť otvoriť zvonku porty **9094/TCP** (Kafka, SASL_SSL) a **80, 443/TCP** (HTTP API). Ostatné tímy sa k nášmu streamu pripájajú zvonku (bez koordinácie s nami), preto je otvorený port 9094 nevyhnutný. Beh 24/7 počas semestra. Ďakujeme.
-
 Ak ÚVT porty neotvorí alebo odpoveď potrvá dlho, použite bežný VPS s rovnakými parametrami; postup je rovnaký.
 
 ## Postup krok za krokom
@@ -54,6 +50,31 @@ Ak ÚVT porty neotvorí alebo odpoveď potrvá dlho, použite bežný VPS s rovn
    ```
    Očakávaný výsledok: `4 z 4 kontrol v poriadku`.
 7. **Odovzdanie ostatným tímom:** adresa `<KAFKA_EXTERNAL_HOST>:9094`, používateľ `teams`, heslo (bezpečným kanálom, nie cez repozitár), `ca.crt` a odkaz na [PRE_TIMY.md](PRE_TIMY.md).
+
+## Variant: Google Cloud na jeden mesiac (bezplatný skúšobný kredit)
+
+Vhodné, ak server potrebujete rýchlo a len na zber dát na niekoľko týždňov: nový účet dostane **300 USD kreditu na 90 dní** (potrebná je platobná karta, kým sa kredit nespotrebuje, nič sa neúčtuje). Náš projekt za mesiac spotrebuje približne 50–70 USD. **Postup nižšie som nemohol vyskúšať na skutočnom účte**, preto príkazy overte podľa [dokumentácie Google Cloud](https://cloud.google.com/compute/docs).
+
+1. **Účet a projekt:** zaregistrujte sa na cloud.google.com (Free Trial), vytvorte projekt a hneď nastavte **upozornenie na rozpočet** (Billing → Budgets & alerts, napr. 50 USD), aby vás nič neprekvapilo.
+2. **Virtuálny stroj** (Compute Engine; 2 vCPU a 8 GB RAM, disk 80 GB, Ubuntu LTS, región v Európe):
+   ```bash
+   gcloud compute addresses create krakow-di-ip --region=europe-central2
+   gcloud compute instances create krakow-di --zone=europe-central2-a \
+     --machine-type=e2-standard-2 --boot-disk-size=80GB --boot-disk-type=pd-balanced \
+     --image-family=ubuntu-2404-lts-amd64 --image-project=ubuntu-os-cloud \
+     --address=krakow-di-ip --tags=krakow-di
+   ```
+3. **Firewall** (80, 443 a Kafka 9094; SSH je v predvolenej sieti už povolené):
+   ```bash
+   gcloud compute firewall-rules create krakow-di-allow \
+     --allow=tcp:80,tcp:443,tcp:9094 --target-tags=krakow-di --source-ranges=0.0.0.0/0
+   ```
+4. **Docker a projekt:** `gcloud compute ssh krakow-di`, potom `curl -fsSL https://get.docker.com | sh` a `sudo usermod -aG docker $USER` (znova sa prihláste). Repozitár je súkromný: naklonujte ho cez SSH kľúč (deploy key) alebo prístupový token.
+5. **Adresa pre Kafku:** bez domény použite statickú IP z kroku 2 ako `KAFKA_EXTERNAL_HOST` a certifikát vytvorte s touto IP: `sh scripts/gen_kafka_tls.sh <IP> <IP>`. Pohodlnejšie je bezplatné DNS meno (napr. DuckDNS) a certifikát na toto meno. Ďalej podľa „Postup krok za krokom“ vyššie (`.env`, `docker compose -f docker-compose.prod.yml up -d --build`, kontrola `tools/check_external.py` z notebooku).
+6. **Na konci (dôležité):** kredit a stroje po 90 dňoch zaniknú a dáta v nich sa stratia. Pred koncom:
+   - vytvorte zálohu: `docker compose -f docker-compose.prod.yml exec backup sh -c 'BACKUP_ONCE=1 sh /backup.sh'` (alebo použite poslednú dennú zálohu v `backups/`) a stiahnite ju na notebook: `gcloud compute scp krakow-di:~/<cesta>/backups/<súbor>.dump .`,
+   - zálohu overte obnovou (pozri „Zálohy“),
+   - potom **zmažte stroj, disk a statickú IP** (nepoužitá statická IP sa účtuje) alebo celý projekt, a v Billing skontrolujte, že nič nebeží.
 
 ## Prevádzka
 

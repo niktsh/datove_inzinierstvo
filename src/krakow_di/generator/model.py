@@ -77,3 +77,35 @@ def crossed_thresholds(fill_before: float, fill_after: float) -> int:
 
 def markup_step(rng: random.Random) -> float:
     return 1.0 + rng.uniform(*MARKUP_RANGE)
+
+
+# ---- divadlo --------------------------------------------------------------------------------
+THEATER_SALE_SIZES = (1, 2, 3, 4)
+THEATER_SALE_SIZE_WEIGHTS = (0.40, 0.35, 0.15, 0.10)
+THEATER_TIME_SCALE_DAYS = 14.0  # divadelné vstupenky sa kupujú bližšie k termínu než letenky
+
+
+@dataclass(frozen=True)
+class TheaterParams:
+    base_rate: float = 0.005  # pravdepodobnosť predaja jedného predstavenia na 5-minútový tik
+    popularity_sigma: float = 1.0
+
+
+def theater_time_factor(days_to_show: float) -> float:
+    """Záujem rastie k termínu predstavenia (0,25 ďaleko vopred, ~2,25 v deň predstavenia)."""
+    return 0.25 + 2.0 * math.exp(-max(days_to_show, 0.0) / THEATER_TIME_SCALE_DAYS)
+
+
+def theater_sale_probability(
+    params: TheaterParams,
+    popularity_: float,
+    days_to_show: float,
+    dt_seconds: float = TICK_REFERENCE_SECONDS,
+) -> float:
+    """Pravdepodobnosť aspoň jedného predaja predstavenia za `dt_seconds`."""
+    per_tick = min(params.base_rate * popularity_ * theater_time_factor(days_to_show), 0.5)
+    return 1.0 - (1.0 - per_tick) ** (dt_seconds / TICK_REFERENCE_SECONDS)
+
+
+def theater_sale_size(rng: random.Random, seats_left: int) -> int:
+    return min(rng.choices(THEATER_SALE_SIZES, weights=THEATER_SALE_SIZE_WEIGHTS)[0], seats_left)

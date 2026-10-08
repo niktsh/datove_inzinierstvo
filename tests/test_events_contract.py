@@ -61,6 +61,7 @@ SAMPLES = {
     "theater.tickets.sold": ("theater", {
         "performance_id": PERF["performance_id"], "category": "Normalny", "quantity": -1,
         "unit_price": 120.0, "currency": "PLN", "unit_price_eur": 27.41, "fx_rate": 4.3775,
+        "simulated": False,
         "detected_between": ["2026-10-14T08:00:01Z", "2026-10-14T12:00:03Z"]}),
 }
 

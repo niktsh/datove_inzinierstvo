@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://krakow-di.local/schemas/events/theater.tickets.sold.json",
   "title": "theater.tickets.sold",
-  "description": "Reálny predaj zistený z rozdielu snímok",
+  "description": "Predaj vstupeniek: reálny (zistený z rozdielu snímok, source=theater) alebo simulovaný generátorom (source=generator, simulated=true)",
   "type": "object",
   "properties": {
     "event_id": {
@@ -25,7 +25,8 @@
     },
     "source": {
       "enum": [
-        "theater"
+        "theater",
+        "generator"
       ]
     },
     "data": {
@@ -83,6 +84,10 @@
           },
           "minItems": 2,
           "maxItems": 2
+        },
+        "simulated": {
+          "type": "boolean",
+          "description": "true = predaj simuloval generátor, false/chýba = reálny predaj"
         }
       },
       "required": [

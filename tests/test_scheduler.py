@@ -98,9 +98,10 @@ def test_start_delay_is_respected():
 def test_build_jobs_uses_configured_intervals():
     s = Settings(_env_file=None, scheduler_ryanair_hours=2, generator_tick_seconds=60)
     jobs = build_jobs(s, publish=False)
-    assert set(jobs) == {"generator", "theater_snapshots", "theater_programme", "travelpayouts",
-                         "ryanair"}
+    assert set(jobs) == {"generator", "theater_generator", "theater_snapshots", "theater_programme",
+                         "travelpayouts", "ryanair"}
     assert jobs["generator"].interval_seconds == 60
+    assert jobs["theater_generator"].interval_seconds == 60
     assert jobs["ryanair"].interval_seconds == 7200
     assert jobs["travelpayouts"].interval_seconds == 6 * 3600
     assert jobs["theater_snapshots"].interval_seconds == 3 * 3600
