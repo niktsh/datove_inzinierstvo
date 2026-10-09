@@ -27,6 +27,31 @@ sources:
     interval_seconds: 3600
     page_size: 1000
 
+  # Tím 4: divadlo (Supabase REST, kľúč v hlavičke apikey) a letenky (FastAPI na Renderi).
+  # Dva REST zdroje jedného tímu sa líšia názvom kanála. Kľúč patrí do .env (TEAM4_SUPABASE_KEY).
+  # Popis ich rozhrania: docs/timy/team_4.md
+  - team: team_4
+    type: custom
+    class: krakow_di.lake.adapters.team_4:Team4RestAdapter
+    channel: rest_theatre
+    interval_seconds: 21600
+    headers:
+      apikey: ${TEAM4_SUPABASE_KEY:-}
+    endpoints:
+      - url: https://zvopbhzdgtxtujobyfgs.supabase.co/rest/v1/theatre_availability_latest
+        params: {select: "*", order: "instance_id,price_band_name,ticket_type_name"}
+        paginate: true
+      - url: https://zvopbhzdgtxtujobyfgs.supabase.co/rest/v1/tickets_sold
+        params: {select: "*", order: "event,performance_date,ticket_price"}
+        paginate: true
+  - team: team_4
+    type: custom
+    class: krakow_di.lake.adapters.team_4:Team4RestAdapter
+    channel: rest_flights
+    interval_seconds: 900
+    endpoints:
+      - url: https://d-tov-in-inierstvo.onrender.com/api/flights
+
   # --- Ukážky pre cudzie tímy (zapnúť po doplnení ich rozhrania) -----------------------------
   # - team: team_03
   #   type: kafka

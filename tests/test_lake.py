@@ -362,7 +362,9 @@ def test_load_adapters_errors(tmp_path):
 
 def test_real_config_loads_own_source():
     adapters = load_adapters("config/lake_sources.yaml", {})
-    assert [a.name for a in adapters] == ["tuke-krakow/kafka", "team_7/sse", "team_7/rest"]
+    assert [a.name for a in adapters] == [
+        "tuke-krakow/kafka", "team_7/sse", "team_7/rest", "team_4/rest_theatre",
+        "team_4/rest_flights"]
     assert adapters[0].group_id == "lake-self" and adapters[0].topics_regex == r"^krakow\..*"
 
 

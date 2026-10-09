@@ -1,0 +1,1 @@
+{"team": "flight-tracker", "flights": [{"origin": "VIE", "destination": "DUB", "flight_number": "1234", "price": 120, "airline": "FR", "departure_at": "2026-10-13T10:30:00+02:00"}]}
