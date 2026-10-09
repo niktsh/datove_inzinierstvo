@@ -58,6 +58,23 @@ def test_sse_stores_raw_frames_skips_heartbeat_and_dedupes_reconnect(migrated_db
     assert body["rows"][0]["source_table"] == "flight_observations"
 
 
+def test_sse_pause_grows_when_server_drops_us_immediately(migrated_db):
+    def handler(req):
+        return httpx.Response(200, content=b"event: ready\ndata: {}\n\n",
+                              headers={"content-type": "text/event-stream"})
+
+    def pause_after(min_healthy):
+        client = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+        adapter = Team7SseAdapter("team_7", URL, reconnect_seconds=0.01, client=client,
+                                      max_connections=4, min_healthy_seconds=min_healthy,
+                                      max_pause_seconds=0.05)
+        asyncio.run(run_adapter(adapter, migrated_db))
+        return adapter.pause
+
+    assert pause_after(5) == 0.05  # spojenia trvajú ~0 s: pauza rastie až po strop
+    assert pause_after(0) == 0.01  # spojenie bolo „zdravé“: pauza zostáva základná
+
+
 def test_sse_http_error_is_raised_for_runner_backoff(migrated_db):
     client = httpx.AsyncClient(transport=httpx.MockTransport(lambda r: httpx.Response(503)))
     adapter = Team7SseAdapter("team_7", URL, client=client)

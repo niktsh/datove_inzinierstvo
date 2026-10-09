@@ -9,6 +9,7 @@ uloží raz, zmenený snímok ako nová správa. Žiadna normalizácia.
 import asyncio
 import hashlib
 import logging
+import time
 from datetime import UTC, datetime
 
 import httpx
@@ -34,39 +35,59 @@ class Team7SseAdapter(Adapter):
 
     def __init__(self, team: str, url: str, reconnect_seconds: float = 2.0, headers=None,
                  client: httpx.AsyncClient | None = None, max_connections: int | None = None,
+                 min_healthy_seconds: float = 10.0, max_pause_seconds: float = 60.0,
                  **_ignored):
         self.team, self.url = team, url
         self.reconnect_seconds, self.headers = reconnect_seconds, headers or {}
         self.client, self.max_connections = client, max_connections
+        # spojenie kratšie než min_healthy_seconds = server nás odpája hneď: pauza sa zdvojnásobuje
+        self.min_healthy_seconds, self.max_pause_seconds = min_healthy_seconds, max_pause_seconds
+        self.pause = reconnect_seconds
 
     async def run(self, sink: Sink, stop: asyncio.Event) -> None:
         client = self.client or httpx.AsyncClient(timeout=None)
         headers = {"User-Agent": USER_AGENT, "Accept": "text/event-stream", **self.headers}
         connections = 0
         while not stop.is_set():
+            started = time.monotonic()
             # chyba spojenia alebo HTTP stav != 2xx sa vyhodí: runner reštartuje s backoffom
-            await self._connection(client, headers, sink, stop)
+            frames, last_event = await self._connection(client, headers, sink, stop)
+            lasted = time.monotonic() - started
+            log.info("%s: spojenie trvalo %.1f s, rámcov %d, posledná udalosť %s",
+                     self.name, lasted, frames, last_event)
             connections += 1
+            if lasted >= self.min_healthy_seconds:
+                self.pause = self.reconnect_seconds
+            else:
+                self.pause = min(self.pause * 2, self.max_pause_seconds)
             if self.max_connections is not None and connections >= self.max_connections:
                 return
             try:  # server spojenie zatvára bežne (~45 s): krátka pauza a znova
-                await asyncio.wait_for(stop.wait(), timeout=self.reconnect_seconds)
+                await asyncio.wait_for(stop.wait(), timeout=self.pause)
             except TimeoutError:
                 pass
 
-    async def _connection(self, client, headers, sink: Sink, stop: asyncio.Event) -> None:
+    async def _connection(
+        self, client, headers, sink: Sink, stop: asyncio.Event
+    ) -> tuple[int, str | None]:
+        """Jedno spojenie: vráti počet rámcov a názov poslednej udalosti (do logu)."""
+        frames, last_event = 0, None
         async with client.stream("GET", self.url, headers=headers) as resp:
             resp.raise_for_status()
             buf: list[str] = []
             async for line in resp.aiter_lines():
                 if stop.is_set():
-                    return
+                    return frames, last_event
                 if line != "":
                     buf.append(line)
                     continue
                 frame = parse_sse_lines(buf)
                 buf = []
-                if frame is None or frame.get("event") in SKIPPED_EVENTS:
+                if frame is None:
+                    continue
+                frames += 1
+                last_event = frame.get("event", "message")
+                if last_event in SKIPPED_EVENTS:
                     continue
                 payload = frame["data"].encode("utf-8")
                 await sink(LakeMessage(
@@ -75,6 +96,7 @@ class Team7SseAdapter(Adapter):
                                 "sha256": digest(payload)},
                     payload_raw=payload,
                 ))
+        return frames, last_event
 
 
 class Team7RestAdapter(Adapter):
