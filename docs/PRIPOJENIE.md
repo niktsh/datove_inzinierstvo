@@ -1,82 +1,95 @@
-# Ako získať dáta tímu Kraków DI (TUKE)
+# Možnosti pripojenia k dátam
 
-Zbierame **letenky do Krakowa (KRK)** a **divadlo Teatr im. J. Słowackiego** a všetko streamujeme. Pripojiť sa dá štyrmi spôsobmi, vyberte si najjednoduchší pre vás.
+Tento dokument stačí na to, aby ste sa k našim dátam pripojili a vedeli, čo v nich je.
 
-Server: **`34.118.112.234`**
+## Aké údaje a odkiaľ ich zbierame
 
-| Spôsob | Na čo | Adresa |
+Zbierame dve veci a oznamujeme ich ako **udalosti** (správy vo formáte JSON):
+
+- **Letenky do Krakowa (KRK)** z viacerých letísk Európy: ponuky, zmeny ceny a predané letenky.
+- **Divadlo Teatr im. J. Słowackiego v Krakowe**: program, ceny, voľné miesta a predané vstupenky.
+
+Nové udalosti pribúdajú počas celého dňa. Všetko, čo sme kedy poslali, je uložené, takže sa môžete pripojiť kedykoľvek a stiahnuť si aj históriu.
+
+**Adresa servera:** `34.118.112.234`
+
+## Ktorý spôsob si vybrať
+
+| Chcem... | Použite | Adresa |
 |---|---|---|
-| REST | pozrieť si dáta, história | `http://34.118.112.234/api/v1/...` (dokumentácia: `/docs`) |
-| SSE | živý prúd cez `curl` alebo prehliadač | `http://34.118.112.234/stream` |
-| WebSocket | živý prúd v aplikácii | `ws://34.118.112.234/ws` |
-| Kafka | hlavný stream, celá história | `34.118.112.234:9094` (treba heslo) |
+| len sa pozrieť, aké dáta máte | **REST** | `http://34.118.112.234/api/v1/...` |
+| živý prúd udalostí, najjednoduchšie (stačí `curl` alebo prehliadač) | **SSE** | `http://34.118.112.234/stream` |
+| živý prúd v aplikácii cez WebSocket | **WebSocket** | `ws://34.118.112.234/ws` |
+| spoľahlivý stream s celou históriou (pre tých, čo používajú Kafku) | **Kafka** | `34.118.112.234:9094` |
 
-## Čo posielame
+REST, SSE a WebSocket fungujú hneď, bez hesla. Kafka potrebuje heslo a certifikát, ktoré vám pošleme na požiadanie.
 
-Každá správa je JSON v rovnakom obale, `data` závisí od typu:
+## Ako sa pripojiť
 
-```json
-{
-  "event_id": "5b94b7be-...",  "event_type": "flight.ticket.sold",  "event_version": 1,
-  "occurred_at": "2026-10-14T09:31:05Z",  "producer": "tuke-di-krakow",
-  "source": "generator",
-  "data": { "...": "..." }
-}
-```
+### REST: pozrieť si dáta
 
-`event_id` je jedinečný (podľa neho odstránite duplicity), `source` je pôvod: `travelpayouts` | `ryanair` | `theater` | `generator`.
+Najjednoduchšie: otvorte v prehliadači `http://34.118.112.234/docs`. Je tam zoznam všetkých dopytov a každý si môžete vyskúšať kliknutím.
 
-| Typ udalosti | Čo znamená | Najdôležitejšie polia v `data` |
-|---|---|---|
-| `flight.offer.found` / `.observed` | nová / opakovane nájdená ponuka | `offer_id`, `origin_iata`, `destination_iata` (KRK), `departure_at`, `airline_iata`, `price`, `currency` (EUR), `seats_left` |
-| `flight.offer.price_changed` | zmena ceny | `offer_id`, `old_price`, `new_price`, `reason` |
-| `flight.offer.sold_out` / `.expired` | vypredaná / odletená ponuka | `offer_id` |
-| `flight.ticket.sold` | **predaná letenka** | `sale_id`, `offer_id`, `quantity` (1–3), `unit_price`, `total_price`, `sold_at` |
-| `theater.performance.found` / `.updated` | predstavenie v programe | `performance_id`, `title`, `stage`, `starts_at`, `status` |
-| `theater.availability.snapshot` | voľné miesta podľa kategórií | `performance_id`, `categories[]` (`category`, `price`, `price_eur`, `seats_available`) |
-| `theater.tickets.sold` | **predané vstupenky** | `performance_id`, `category`, `quantity`, `unit_price`, `unit_price_eur`, `simulated` |
-
-## Čo je skutočné a čo simulované
-
-- **Skutočné:** ponuky a ceny leteniek (Travelpayouts, Ryanair), program, ceny a voľné miesta v divadle.
-- **Simulované generátorom:** predané letenky a počet miest (`source: generator`, v ponukách `seats_simulated: true`).
-- **Predaje vstupeniek do divadla sú dvoch druhov:** skutočné, zistené z poklesu voľných miest (`simulated: false`, `source: theater`), a simulované (`simulated: true`, `source: generator`). Záporné `quantity` je vrátenie miest.
-- Ceny leteniek sú v **EUR**. Divadlo predáva v **PLN** a pri cene je aj prepočet `price_eur` (kurz ECB v deň snímky).
-
-## 1. REST (najjednoduchšie)
-
-V prehliadači otvorte **`http://34.118.112.234/docs`**: každý dopyt si tam môžete vyskúšať kliknutím. V termináli:
+V termináli:
 
 ```bash
 curl 'http://34.118.112.234/api/v1/stats'                          # koľko čoho máme
-curl 'http://34.118.112.234/api/v1/offers?origin=BCN&limit=5'      # ponuky leteniek
+curl 'http://34.118.112.234/api/v1/offers?origin=BCN&limit=5'      # ponuky leteniek z Barcelony
 curl 'http://34.118.112.234/api/v1/sales?limit=5'                  # predané letenky
-curl 'http://34.118.112.234/api/v1/theater/performances?limit=5'   # predstavenia
-curl 'http://34.118.112.234/api/v1/theater/sales?limit=5'          # predané vstupenky (aj ?source=generator)
+curl 'http://34.118.112.234/api/v1/theater/performances?limit=5'   # divadelné predstavenia
+curl 'http://34.118.112.234/api/v1/theater/sales?limit=5'          # predané vstupenky
 ```
 
-Zoznamy majú tvar `{"items": [...], "total": N, "limit": L, "offset": O}`; ďalšie stránky cez `offset`.
+Odpoveď má tvar `{"items": [...], "total": 120, "limit": 5, "offset": 0}`. Ďalšie stránky získate zvýšením `offset` (napr. `&offset=5`).
 
-## 2. SSE (živý prúd)
+### SSE: živý prúd
 
 ```bash
 curl -N 'http://34.118.112.234/stream?types=flight.ticket.sold'
 ```
 
-`types` je voliteľný filter (viac typov oddeľte čiarkou, `theater.*` = všetky divadelné). Chcete aj históriu? Pridajte `last_event_id=0`. Po výpadku sa knižnica pripojí s `Last-Event-ID` a nič neprídete.
+Spojenie ostane otvorené a vždy, keď predáme letenku, dostanete novú udalosť.
 
-## 3. WebSocket
+- `types` je filter. Typy oddeľte čiarkou, `theater.*` znamená všetky divadelné udalosti. Bez filtra dostanete všetko.
+- Chcete začať od začiatku, nie len od teraz? Pridajte `&last_event_id=0`.
+- Ak spojenie padne, väčšina knižníc a prehliadačov sa pripojí sama a pokračuje tam, kde skončila.
 
-`ws://34.118.112.234/ws?types=flight.ticket.sold`, rovnaké filtre. Správa: `{"seq": 123, "event": {...}}`.
+Príklad v Pythone:
 
-## 4. Kafka
+```python
+import json, httpx
 
-Od nás potrebujete **heslo** a súbor **`ca.crt`** (napíšte nám).
+with httpx.stream("GET", "http://34.118.112.234/stream",
+                  params={"types": "flight.ticket.sold"}, timeout=None) as r:
+    for line in r.iter_lines():
+        if line.startswith("data: "):
+            event = json.loads(line[6:])
+            print(event["event_type"], event["data"])
+```
 
-- `34.118.112.234:9094`, `SASL_SSL`, mechanizmus `SCRAM-SHA-512`, používateľ `teams` (iba čítanie)
-- consumer group musí začínať **`team-`** (napr. `team-05-reader`)
-- topiky: `krakow.flights.offers`, `krakow.flights.sales`, `krakow.theater.performances`, `krakow.theater.availability`, `krakow.theater.sales` (kľúč správy = `offer_id` / `performance_id`)
-- história sa nemaže: `auto_offset_reset=earliest` prečíta všetko od začiatku
+### WebSocket
+
+```python
+import asyncio, json, websockets
+
+async def main():
+    async with websockets.connect("ws://34.118.112.234/ws?types=flight.ticket.sold") as ws:
+        async for message in ws:
+            print(json.loads(message)["event"])      # správa: {"seq": 123, "event": {...}}
+
+asyncio.run(main())
+```
+
+Filter `types` a `last_event_id` fungujú rovnako ako pri SSE.
+
+### Kafka
+
+Heslo a certifikát `ca.crt` vám pošleme. Potom:
+
+- adresa `34.118.112.234:9094`, protokol `SASL_SSL`, mechanizmus `SCRAM-SHA-512`
+- používateľ `teams`, heslo od nás (môžete iba čítať, zapisovať k nám nejde)
+- názov vašej **consumer group** musí začínať `team-`, napr. `team-05-reader`
+- `auto_offset_reset=earliest` prečíta všetko od začiatku; história sa nemaže
 
 ```python
 import asyncio, json, ssl
@@ -97,4 +110,64 @@ async def main():
 asyncio.run(main())
 ```
 
-Otázky alebo problémy s pripojením? Napíšte nám.
+Topiky (v každom sú správy jednej témy, kľúč správy je id letenky alebo predstavenia):
+
+| Topik | Čo obsahuje |
+|---|---|
+| `krakow.flights.offers` | ponuky leteniek a ich zmeny |
+| `krakow.flights.sales` | predané letenky |
+| `krakow.theater.performances` | program divadla |
+| `krakow.theater.availability` | voľné miesta v divadle |
+| `krakow.theater.sales` | predané vstupenky do divadla |
+
+## Ako vyzerá správa
+
+Každá správa je JSON v rovnakom obale, v poli `data` sú samotné údaje:
+
+```json
+{
+  "event_id": "5b94b7be-4db2-47b8-94ad-dd16897ccdd7",
+  "event_type": "flight.ticket.sold",
+  "event_version": 1,
+  "occurred_at": "2026-10-14T09:31:05Z",
+  "producer": "tuke-di-krakow",
+  "source": "generator",
+  "data": {
+    "sale_id": "f1278f4e-fd89-40a7-8e00-319878fffae2",
+    "offer_id": "0f922af3394cd5c6",
+    "origin_iata": "BCN", "destination_iata": "KRK",
+    "departure_at": "2026-11-26T16:10:00+00:00",
+    "airline_iata": "FR", "flight_number": "FR82",
+    "quantity": 2, "unit_price": 44.99, "total_price": 89.98, "currency": "EUR",
+    "seats_left_after": 188, "sold_at": "2026-10-14T09:31:05Z"
+  }
+}
+```
+
+- `event_id` je jedinečný: ak dostanete tú istú správu dvakrát, poznáte ju podľa neho.
+- `event_type` hovorí, čo sa stalo (tabuľka nižšie). `occurred_at` je čas udalosti v UTC.
+
+### Typy udalostí
+
+| `event_type` | Čo sa stalo | Hlavné údaje v `data` |
+|---|---|---|
+| `flight.offer.found` | našli sme novú ponuku letenky | `offer_id`, `origin_iata`, `destination_iata`, `departure_at`, `airline_iata`, `price`, `currency`, `seats_left` |
+| `flight.offer.observed` | znova sme videli známu ponuku (pre históriu) | rovnaké ako `found` |
+| `flight.offer.price_changed` | zmenila sa cena | `offer_id`, `old_price`, `new_price` |
+| `flight.offer.sold_out` | ponuka je vypredaná | `offer_id`, `last_price` |
+| `flight.offer.expired` | let už odletel | `offer_id` |
+| `flight.ticket.sold` | **predali sme letenku** | `sale_id`, `offer_id`, `quantity` (1–3), `unit_price`, `total_price`, `sold_at` |
+| `theater.performance.found`, `theater.performance.updated` | predstavenie v programe | `performance_id`, `title`, `stage`, `starts_at`, `status` |
+| `theater.availability.snapshot` | koľko miest je voľných | `performance_id`, `categories[]` (`category`, `price`, `price_eur`, `seats_available`) |
+| `theater.tickets.sold` | **predali sa vstupenky** | `performance_id`, `category`, `quantity`, `unit_price`, `unit_price_eur`, `simulated` |
+
+## Čo je dobré vedieť
+
+- **Čo je skutočné a čo simulované.** Ponuky leteniek, ceny a program divadla sú skutočné. **Predané letenky a počet voľných miest pri letenkách sú simulované** generátorom (udalosť má `source: generator`). Pri divadle sú dva druhy predaja: skutočný (z poklesu voľných miest, `simulated: false`) a simulovaný (`simulated: true`). Podľa tohto poľa ich oddelíte.
+- **Meny.** Letenky sú v **EUR**. Divadlo predáva v **PLN**; pri cene je aj `price_eur` prepočítané kurzom ECB.
+- **Čas.** `occurred_at` a `sold_at` sú v UTC (končia na `Z`). `departure_at` a `starts_at` majú posun miestneho času (napr. `+01:00`).
+- **Záporné množstvo.** Pri vstupenkách znamená záporné `quantity` vrátenie miest.
+- **Duplicity.** Správa vám môže prísť dvakrát (napr. po výpadku spojenia). Odstránite ich podľa `event_id`.
+- **Poradie.** Udalosti jednej letenky (alebo jedného predstavenia) idú vždy za sebou v správnom poradí.
+
+Potrebujete heslo ku Kafke alebo niečo nefunguje? Napíšte nám.
