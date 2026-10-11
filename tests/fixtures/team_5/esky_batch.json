@@ -1,0 +1,52 @@
+[
+  {
+    "metadata": {
+      "scraper_id": "esky",
+      "target_domain": "flights",
+      "scraped_at_utc": "2026-10-04T20:59:33Z",
+      "batch_id": "01ca3bcc-d133-4e8c-8c1b-16a5f5bae00e",
+      "source_url": "https://www.esky.sk/letenky",
+      "item_count": 1
+    },
+    "payload": {
+      "flight_number": "FR STN-PRG-300",
+      "origin": "STN",
+      "destination": "PRG",
+      "departure_date": "2026-10-29",
+      "departure_time": "2026-10-29T3:00:00Z",
+      "arrival_time": "2026-10-29T14:00:00Z",
+      "airline": "Ryanair",
+      "is_direct": true,
+      "price": 111.0,
+      "currency": "EUR",
+      "availability_status": "available",
+      "tickets_sold": 2,
+      "scraped_at": "2026-10-04T20:59:33.800416+00:00"
+    }
+  },
+  {
+    "metadata": {
+      "scraper_id": "esky",
+      "target_domain": "flights",
+      "scraped_at_utc": "2026-10-04T20:59:33Z",
+      "batch_id": "01ca3bcc-d133-4e8c-8c1b-16a5f5bae00e",
+      "source_url": "https://www.esky.sk/letenky",
+      "item_count": 1
+    },
+    "payload": {
+      "flight_number": "FL STN-PRG-300",
+      "origin": "STN",
+      "destination": "PRG",
+      "departure_date": "2026-10-29",
+      "departure_time": "2026-10-29T3:00:00Z",
+      "arrival_time": "2026-10-29T14:00:00Z",
+      "airline": "Objavte najlacnej\u0161ie lety",
+      "is_direct": true,
+      "price": 111.0,
+      "currency": "EUR",
+      "availability_status": "available",
+      "tickets_sold": 3,
+      "scraped_at": "2026-10-04T20:59:33.847339+00:00"
+    }
+  }
+]

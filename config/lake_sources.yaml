@@ -52,6 +52,19 @@ sources:
     endpoints:
       - url: https://d-tov-in-inierstvo.onrender.com/api/flights
 
+  # Tím 5: letenky v ich S3 data lake (Cloudflare R2), čítame nové JSON objekty. Kľúče patria do
+  # .env (TEAM5_R2_ACCESS_KEY_ID, TEAM5_R2_SECRET_ACCESS_KEY). Divadlo od nich chodí cez webhook
+  # (krakow_di/api/webhooks.py). Popis ich rozhrania: docs/timy/team_5.md
+  - team: team_5
+    type: custom
+    class: krakow_di.lake.adapters.team_5:Team5S3Adapter
+    endpoint_url: https://c608e03810a73013b48d96d9dabfb988.r2.cloudflarestorage.com
+    bucket: data-lake
+    prefix: bronze/domain=flights/
+    access_key: ${TEAM5_R2_ACCESS_KEY_ID:-}
+    secret_key: ${TEAM5_R2_SECRET_ACCESS_KEY:-}
+    interval_seconds: 1800
+
   # --- Ukážky pre cudzie tímy (zapnúť po doplnení ich rozhrania) -----------------------------
   # - team: team_03
   #   type: kafka

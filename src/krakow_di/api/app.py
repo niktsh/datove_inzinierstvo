@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
-from krakow_di.api import rest, stream
+from krakow_di.api import rest, stream, webhooks
 from krakow_di.api.gateway import KafkaGateway
 from krakow_di.api.hub import EventHub
 from krakow_di.config import Settings, get_settings
@@ -50,9 +50,11 @@ def create_app(settings: Settings | None = None, start_gateway: bool = True) -> 
             await pool.close()
 
     app = FastAPI(title="Kraków DI", version="1.0.0", description=DESCRIPTION, lifespan=lifespan)
+    app.state.settings = settings
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"])
     app.include_router(rest.router)
     app.include_router(stream.router)
+    app.include_router(webhooks.router)
 
     @app.get("/health", tags=["systém"], summary="Stav služby")
     async def health(request: Request):

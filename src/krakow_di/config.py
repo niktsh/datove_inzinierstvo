@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     scheduler_theater_snapshots_hours: float = 3
     scheduler_heartbeat_file: str = "data/scheduler.heartbeat"
 
+    # Príjem push správ od tímu 5 (webhook): tajný token v adrese; prázdny = endpoint vypnutý
+    team5_webhook_token: str = ""
+
     producer_id: str = "tuke-di-krakow"
 
     @field_validator("generator_seed", mode="before")

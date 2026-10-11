@@ -1,0 +1,122 @@
+[
+  {
+    "metadata": {
+      "scraper_id": "ryanair_scraper_v1",
+      "target_domain": "flights",
+      "scraped_at_utc": "2026-10-03T16:15:38Z",
+      "batch_id": "c47bc976-4022-412d-8a8f-ae33b2ca9614",
+      "source_url": "https://services-api.ryanair.com/farfnd/v4/oneWayFares?departureAirportIataCode=STN&arrivalAirportIataCode=PRG",
+      "item_count": 1
+    },
+    "payload": {
+      "departureTime": "2026-10-14T06:05:00",
+      "flightNumber": "FR 1013",
+      "price": 28.22,
+      "currency": "EUR",
+      "origin": "STN",
+      "originFull": "London Stansted, United Kingdom",
+      "destination": "PRG",
+      "destinationFull": "Prague, Czech Republic",
+      "arrivalTime": "2026-10-14T08:05:00",
+      "airline": "Ryanair",
+      "is_direct": true,
+      "flight_number": "FR 1013",
+      "departure_time": "2026-10-14T06:05:00",
+      "departure_date": "2026-10-14",
+      "arrival_time": "2026-10-14T08:05:00",
+      "direction": "arrival",
+      "availability_status": "available",
+      "tickets_sold": 1
+    }
+  },
+  {
+    "metadata": {
+      "scraper_id": "ryanair_scraper_v1",
+      "target_domain": "flights",
+      "scraped_at_utc": "2026-10-03T16:15:40Z",
+      "batch_id": "c47bc976-4022-412d-8a8f-ae33b2ca9614",
+      "source_url": "https://services-api.ryanair.com/farfnd/v4/oneWayFares?departureAirportIataCode=DUB&arrivalAirportIataCode=PRG",
+      "item_count": 1
+    },
+    "payload": {
+      "departureTime": "2026-11-02T18:30:00",
+      "flightNumber": "FR 96",
+      "price": 44.11,
+      "currency": "EUR",
+      "origin": "DUB",
+      "originFull": "Dublin, Ireland",
+      "destination": "PRG",
+      "destinationFull": "Prague, Czech Republic",
+      "arrivalTime": "2026-11-02T21:00:00",
+      "airline": "Ryanair",
+      "is_direct": true,
+      "flight_number": "FR 96",
+      "departure_time": "2026-11-02T18:30:00",
+      "departure_date": "2026-11-02",
+      "arrival_time": "2026-11-02T21:00:00",
+      "direction": "arrival",
+      "availability_status": "available",
+      "tickets_sold": 2
+    }
+  },
+  {
+    "metadata": {
+      "scraper_id": "ryanair_scraper_v1",
+      "target_domain": "flights",
+      "scraped_at_utc": "2026-10-03T16:15:42Z",
+      "batch_id": "c47bc976-4022-412d-8a8f-ae33b2ca9614",
+      "source_url": "https://services-api.ryanair.com/farfnd/v4/oneWayFares?departureAirportIataCode=BGY&arrivalAirportIataCode=PRG",
+      "item_count": 1
+    },
+    "payload": {
+      "departureTime": "2026-10-21T06:00:00",
+      "flightNumber": "FR 3528",
+      "price": 15.99,
+      "currency": "EUR",
+      "origin": "BGY",
+      "originFull": "Milan Bergamo, Italy",
+      "destination": "PRG",
+      "destinationFull": "Prague, Czech Republic",
+      "arrivalTime": "2026-10-21T07:25:00",
+      "airline": "Ryanair",
+      "is_direct": true,
+      "flight_number": "FR 3528",
+      "departure_time": "2026-10-21T06:00:00",
+      "departure_date": "2026-10-21",
+      "arrival_time": "2026-10-21T07:25:00",
+      "direction": "arrival",
+      "availability_status": "available",
+      "tickets_sold": 3
+    }
+  },
+  {
+    "metadata": {
+      "scraper_id": "ryanair_scraper_v1",
+      "target_domain": "flights",
+      "scraped_at_utc": "2026-10-03T16:15:46Z",
+      "batch_id": "c47bc976-4022-412d-8a8f-ae33b2ca9614",
+      "source_url": "https://services-api.ryanair.com/farfnd/v4/oneWayFares?departureAirportIataCode=BCN&arrivalAirportIataCode=PRG",
+      "item_count": 1
+    },
+    "payload": {
+      "departureTime": "2026-10-25T05:45:00",
+      "flightNumber": "FR 3072",
+      "price": 67.24,
+      "currency": "EUR",
+      "origin": "BCN",
+      "originFull": "Barcelona, Spain",
+      "destination": "PRG",
+      "destinationFull": "Prague, Czech Republic",
+      "arrivalTime": "2026-10-25T08:15:00",
+      "airline": "Ryanair",
+      "is_direct": true,
+      "flight_number": "FR 3072",
+      "departure_time": "2026-10-25T05:45:00",
+      "departure_date": "2026-10-25",
+      "arrival_time": "2026-10-25T08:15:00",
+      "direction": "arrival",
+      "availability_status": "available",
+      "tickets_sold": 0
+    }
+  }
+]
