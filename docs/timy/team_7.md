@@ -6,10 +6,18 @@ Zdroj: ich popis rozhrania „Pripojenie k dátam: letenky (SSE) a divadlo (REST
 
 ## Ako svoje dáta poskytujú
 
-Server: `http://147.232.204.126` (od 15. 10. 2026; pôvodne Cloudflare Worker
-`university-data-api.artur-yevdokymov.workers.dev`, cesty hlavných endpointov ostali rovnaké, API číta
-dáta priamo zo Supabase). Verejné GET požiadavky, **bez prihlasovania**, preto v `.env` nie sú žiadne údaje.
-Adresa je iba HTTP (bez TLS), pre náš server-to-server zber to nevadí.
+Server (aktualizácia 17. 10. 2026):
+- priamy: `http://147.232.204.126`, **dostupný iba zo siete TUKE**: z nášho servera na Google Cloud
+  vypršal časový limit pripojenia;
+- mimo siete TUKE: HTTPS cez ngrok `https://outlast-lying-sloppily.ngrok-free.dev` (rovnaké cesty a dáta,
+  odporúčaná hlavička `ngrok-skip-browser-warning: 1`). **Používame túto adresu** (`headers` v
+  `config/lake_sources.yaml`).
+- pôvodne Cloudflare Worker `university-data-api.artur-yevdokymov.workers.dev`; API číta dáta priamo zo Supabase.
+
+Verejné GET požiadavky, **bez prihlasovania**, preto v `.env` nie sú žiadne údaje.
+**Limit ngrok (voľný tarif):** 1 GB a 20 000 HTTP požiadaviek mesačne na účet, počíta sa aj SSE.
+Preto pri SSE nesmie zbytočne často vznikať nové spojenie (adaptér pri krátkych spojeniach predlžuje
+pauzu až na 60 s) a REST divadla beží iba raz za hodinu.
 
 | Účel | Endpoint | Výstup |
 |---|---|---|
