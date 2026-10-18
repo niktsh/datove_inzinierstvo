@@ -6,22 +6,29 @@ Zdroj: ich popis rozhrania „Pripojenie k dátam: letenky (SSE) a divadlo (REST
 
 ## Ako svoje dáta poskytujú
 
-Server: `https://university-data-api.artur-yevdokymov.workers.dev` (Cloudflare Worker nad
-Supabase). Verejné GET požiadavky, **bez prihlasovania**, preto v `.env` nie sú žiadne údaje.
+Server: `http://147.232.204.126` (od 15. 10. 2026; pôvodne Cloudflare Worker
+`university-data-api.artur-yevdokymov.workers.dev`, cesty hlavných endpointov ostali rovnaké, API číta
+dáta priamo zo Supabase). Verejné GET požiadavky, **bez prihlasovania**, preto v `.env` nie sú žiadne údaje.
+Adresa je iba HTTP (bez TLS), pre náš server-to-server zber to nevadí.
 
 | Účel | Endpoint | Výstup |
 |---|---|---|
 | Letenky | `GET /api/stream?limit=N` (N 1–100) | SSE, 6 tabuliek z DB1, DB3, DB4 |
 | Divadlo | `GET /api/theatre?limit=N&offset=M` (N 1–1000) | JSON `{success, database, table, count, data[]}`, tabuľka `db2.ticket_snapshots` |
 | Všetko | `GET /api/all` | JSON, všetkých 7 tabuliek (nepoužívame) |
+| Jedna tabuľka | `GET /api/table?database=db3&table=...&limit=&offset=&order=` | JSON, obálka s `has_more`, `next_offset` (zatiaľ nepoužívame, možnosť na úplnú históriu) |
+
+Parametre `limit`, `offset` a `order` (`asc`|`desc`, predvolene `desc`) fungujú aj pri SSE.
 
 ### SSE (letenky)
 - Udalosti `ready` (zoznam zdrojov a interval kontroly 10 s), `snapshot` (`{database, table, rows[]}`
   pre každú tabuľku po pripojení), `change` (zmena zistená približne každých 10 s), `warning`
-  (napr. „No time/id column detected; recent records may be missed“) a `heartbeat`
-  (`{"time": ...}`) a `reconnect` (oznam, že server spojenie zatvára).
+  (chýba čas zberu, triedenie podľa primárneho kľúča), `source_error` (`{source, error}`: chyba
+  jednej tabuľky, ostatné pokračujú) a `heartbeat` (`{"time": ...}` každých 10 s). Udalosť
+  `reconnect` sa od 15. 10. 2026 neposiela.
 - Správy **nemajú `id`** a nepodporujú `Last-Event-ID`; úplná história zmien neexistuje.
-  Spojenie sa po ~40–50 s zatvorí a klient sa musí pripojiť znova, pričom dostane znova snímky.
+  Snímky sa posielajú znova po každom pripojení; spojenie, ktoré sa dosiaľ zatvárovalo po ~40–50 s,
+  by na novom serveri malo držať dlhšie (overiť v logu `spojenie trvalo`).
 - Tabuľky: `db1/flight_observations`, `db1/flight_searches` (Pelikan), `db3/flightwatch_observations`,
   `db3/flightwatch_searches` (Ryanair a ďalší), `db4/de_kiwi_observations`, `db4/de_kiwi_searches` (Kiwi).
   Stĺpce sa medzi tabuľkami líšia. Riadky majú doplnené `source_database` a `source_table`.
