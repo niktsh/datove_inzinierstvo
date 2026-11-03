@@ -6,18 +6,19 @@ Zdroj: ich popis rozhrania „Pripojenie k dátam: letenky (SSE) a divadlo (REST
 
 ## Ako svoje dáta poskytujú
 
-Server (aktualizácia 17. 10. 2026):
-- priamy: `http://147.232.204.126`, **dostupný iba zo siete TUKE**: z nášho servera na Google Cloud
-  vypršal časový limit pripojenia;
-- mimo siete TUKE: HTTPS cez ngrok `https://outlast-lying-sloppily.ngrok-free.dev` (rovnaké cesty a dáta,
-  odporúčaná hlavička `ngrok-skip-browser-warning: 1`). **Používame túto adresu** (`headers` v
-  `config/lake_sources.yaml`).
-- pôvodne Cloudflare Worker `university-data-api.artur-yevdokymov.workers.dev`; API číta dáta priamo zo Supabase.
+Server (aktualizácia 2. 11. 2026): `https://warriors-of-tuke.germanywestcentral.cloudapp.azure.com`
+(Azure, dostupný aj mimo siete TUKE). História adries: pôvodne Cloudflare Worker
+`university-data-api.artur-yevdokymov.workers.dev`, potom `147.232.204.126` (iba sieť TUKE; z nášho
+servera na Google Cloud vypršal časový limit) a ngrok `outlast-lying-sloppily.ngrok-free.dev`; obe
+posledné sa už nepoužívajú, hlavička `ngrok-skip-browser-warning` netreba. API číta dáta priamo zo Supabase.
 
 Verejné GET požiadavky, **bez prihlasovania**, preto v `.env` nie sú žiadne údaje.
-**Limit ngrok (voľný tarif):** 1 GB a 20 000 HTTP požiadaviek mesačne na účet, počíta sa aj SSE.
-Preto pri SSE nesmie zbytočne často vznikať nové spojenie (adaptér pri krátkych spojeniach predlžuje
-pauzu až na 60 s) a REST divadla beží iba raz za hodinu.
+**Limity:** najviac 10 požiadaviek za sekundu a 3 súbežné SSE spojenia z jednej IP (inak HTTP 429);
+rovnaká JSON požiadavka môže do 60 s vrátiť uloženú odpoveď. Prosia, aby sa celá história nesťahovala
+opakovane (mesačné limity prenosu zdrojov): `limit` až 5000, nový parameter `since` (ISO 8601, `+` ako
+`%2B`) vráti iba novšie záznamy (nepoužíva sa pri SSE). Stránka `/api/theatre` má približne 2,4 MB,
+preto REST divadla pýtame raz za 6 hodín (`interval_seconds: 21600`), nie raz za hodinu.
+Možné vylepšenie: používať `since` (nastaviť približne o hodinu skôr než posledné sťahovanie).
 
 | Účel | Endpoint | Výstup |
 |---|---|---|
@@ -61,7 +62,7 @@ Každá správa sa uloží ako surové bajty (`payload_raw`), `payload_json` sa 
   Pri ich zatvorení spojenia sa adaptér po 2 s pripojí znova (bežné správanie, nie chyba);
   skutočná chyba (HTTP != 2xx, sieť) ide cez reštart runnera s backoffom.
   **Vynechávame iba `heartbeat`**: iba udržiava spojenie (čas každých ~10 s) a neobsahuje dáta.
-- **REST:** raz za hodinu (`interval_seconds: 3600`) sa stiahnu stránky `limit=1000&offset=…`,
+- **REST:** raz za 6 hodín (`interval_seconds: 21600`) sa stiahnu stránky `limit=1000&offset=…`,
   kým nepríde neplná stránka. Každá stránka sa uloží celá; `source_ref` = `{url, offset, sha256}`.
   Nezmenená odpoveď sa neuloží znova, zmena obsahu vytvorí novú správu (história snímkov).
 

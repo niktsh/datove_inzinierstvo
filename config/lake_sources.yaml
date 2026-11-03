@@ -15,22 +15,18 @@ sources:
     group_id: lake-self
 
   # Tím 7 (verejné GET, bez prihlasovania, od 15. 10. 2026 vlastný server): letenky cez SSE, divadlo cez REST.
-  # Priamy server 147.232.204.126 je dostupný iba zo siete TUKE (z GCP časový limit), preto ide
-  # prístup cez ich ngrok (HTTPS) s hlavičkou ngrok-skip-browser-warning.
+  # Od 2. 11. 2026 ich API beží na Azure (HTTPS, dostupné aj mimo siete TUKE); limity: 10 požiadaviek
+  # za sekundu a 3 súbežné SSE spojenia z jednej IP, prosia o nesťahovanie celej histórie opakovane.
   # Popis ich rozhrania: docs/timy/team_7.md
   - team: team_7
     type: custom
     class: krakow_di.lake.adapters.team_7:Team7SseAdapter
-    url: https://outlast-lying-sloppily.ngrok-free.dev/api/stream?limit=100
-    headers:
-      ngrok-skip-browser-warning: "1"
+    url: https://warriors-of-tuke.germanywestcentral.cloudapp.azure.com/api/stream?limit=100
   - team: team_7
     type: custom
     class: krakow_di.lake.adapters.team_7:Team7RestAdapter
-    url: https://outlast-lying-sloppily.ngrok-free.dev/api/theatre
-    headers:
-      ngrok-skip-browser-warning: "1"
-    interval_seconds: 3600
+    url: https://warriors-of-tuke.germanywestcentral.cloudapp.azure.com/api/theatre
+    interval_seconds: 21600
     page_size: 1000
 
   # Tím 4: divadlo (Supabase REST, kľúč v hlavičke apikey) a letenky (FastAPI na Renderi).

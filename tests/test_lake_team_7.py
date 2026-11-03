@@ -15,8 +15,8 @@ from krakow_di.lake.writer import write_message
 FIX = Path(__file__).parent / "fixtures" / "team_7"
 STREAM = (FIX / "stream_limit1.txt").read_bytes()
 THEATRE = (FIX / "theatre_limit2.json").read_bytes()
-URL = "https://outlast-lying-sloppily.ngrok-free.dev/api/stream?limit=100"
-API = "https://outlast-lying-sloppily.ngrok-free.dev/api/theatre"
+URL = "https://warriors-of-tuke.germanywestcentral.cloudapp.azure.com/api/stream?limit=100"
+API = "https://warriors-of-tuke.germanywestcentral.cloudapp.azure.com/api/theatre"
 
 
 def rows(conn):
