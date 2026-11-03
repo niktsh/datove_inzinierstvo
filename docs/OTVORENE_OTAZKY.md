@@ -16,6 +16,7 @@ Formát: otázka → stav → rozhodnutie/kto rozhoduje. Uzavreté otázky nemaz
 - [ ] Horizont dátumov: 90 dní?
 - [x] ✅ Mena: letenky pýtame v EUR; divadlo (PLN) sa ukladá v origináli + `price_eur` podľa kurzu ECB v deň snímky (rozhodnutie používateľa: ceny majú byť v eurách)
 - [x] ✅ Parametre generátora: tik 5 minút, `base_rate` 0,004, sigma popularity 1,0 (nastaviteľné cez `.env`). Cieľom je viac ako 10 000 leteniek (viac dát je lepšie), pozri „Odhad objemu“.
+- [x] ✅ **Zníženie objemu udalostí (2026-11-03):** vyučujúci odporúča menej ako pol milióna udalostí. Pri `base_rate` 0,004 išlo o ≈9 000 udalostí denne (≈2 800 z generátora, ≈6 200 zo zberačov a snímok divadla). Na serveri sme v `.env` nastavili `GENERATOR_BASE_RATE=0.0015` (predvolená hodnota v kóde a v `.env.example` ostáva 0,004, testy sa na ňu spoliehajú). Odhad: ≈7 900 udalostí denne, k 25. 11. ≈454 tisíc, hranica 500 tisíc sa prekročí približne 12. 12. Samotné zberače a snímky divadla (≈6 200 denne) generátor neovplyvní: ak bude termín neskôr, treba znížiť frekvenciu publikovania `flight.offer.observed`. Kontrola: `curl http://<IP>/api/v1/stats`, pole `events` (3. 11.: 280 335).
 - [x] ✅ **Odhad objemu 10 000** (letenky = predané miesta + ponuky; udalosti osobitne), urobený 2026-10-04 po plnom behu oboch zdrojov; pozri „Odhad objemu“ nižšie. Parametre generátora sa ešte rozhodnú vo fáze 6.
 - [ ] Kde hostujeme: Hron/ÚVT alebo VPS; požiadavky sú v `docs/NASADENIE.md` (vrátane variantu Google Cloud na jeden mesiac) (2 vCPU, 4 GB RAM, 50–100 GB, porty 80/443/9094)
 - [x] ✅ Mesto: Kraków (KRK)
