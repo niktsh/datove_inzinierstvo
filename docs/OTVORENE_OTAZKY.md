@@ -16,7 +16,7 @@ Formát: otázka → stav → rozhodnutie/kto rozhoduje. Uzavreté otázky nemaz
 - [ ] Horizont dátumov: 90 dní?
 - [x] ✅ Mena: letenky pýtame v EUR; divadlo (PLN) sa ukladá v origináli + `price_eur` podľa kurzu ECB v deň snímky (rozhodnutie používateľa: ceny majú byť v eurách)
 - [x] ✅ Parametre generátora: tik 5 minút, `base_rate` 0,004, sigma popularity 1,0 (nastaviteľné cez `.env`). Cieľom je viac ako 10 000 leteniek (viac dát je lepšie), pozri „Odhad objemu“.
-- [x] ✅ **Zníženie objemu udalostí (2026-11-03):** vyučujúci odporúča menej ako pol milióna udalostí. Pri `base_rate` 0,004 išlo o ≈9 000 udalostí denne (≈2 800 z generátora, ≈6 200 zo zberačov a snímok divadla). Na serveri sme v `.env` nastavili `GENERATOR_BASE_RATE=0.0015` (predvolená hodnota v kóde a v `.env.example` ostáva 0,004, testy sa na ňu spoliehajú). Odhad: ≈7 900 udalostí denne, k 25. 11. ≈454 tisíc, hranica 500 tisíc sa prekročí približne 12. 12. Samotné zberače a snímky divadla (≈6 200 denne) generátor neovplyvní: ak bude termín neskôr, treba znížiť frekvenciu publikovania `flight.offer.observed`. Kontrola: `curl http://<IP>/api/v1/stats`, pole `events` (3. 11.: 280 335).
+- [x] ✅ **Objem udalostí pod 500 000:** vyučujúci odporúča zostať pod pol miliónom udalostí; postupné zmeny a odhady sú v sekcii „Denník zmien objemu udalostí“ nižšie.
 - [x] ✅ **Odhad objemu 10 000** (letenky = predané miesta + ponuky; udalosti osobitne), urobený 2026-10-04 po plnom behu oboch zdrojov; pozri „Odhad objemu“ nižšie. Parametre generátora sa ešte rozhodnú vo fáze 6.
 - [ ] Kde hostujeme: Hron/ÚVT alebo VPS; požiadavky sú v `docs/NASADENIE.md` (vrátane variantu Google Cloud na jeden mesiac) (2 vCPU, 4 GB RAM, 50–100 GB, porty 80/443/9094)
 - [x] ✅ Mesto: Kraków (KRK)
@@ -39,6 +39,23 @@ Formát: otázka → stav → rozhodnutie/kto rozhoduje. Uzavreté otázky nemaz
 - **Predaje (zmerané simuláciou, 2026-10-04):** pôvodný hrubý odhad (~100 predajov denne) bol príliš nízky. Simulácia generátora na kópii reálnych 1533 ponúk (`base_rate` 0,004, 2 simulované dni, seed 1) dala **~2 400 predajov denne (~3 800 predaných miest)**, v priemere 1,6 miesta na predaj, ~30 zmien ceny a ~12 vypredaných ponúk denne. 10 000 predaných miest je teda hotových za ~2,6 dňa a za semester vychádza rádovo 100–200 tisíc miest (rádovo desiatky percent celkovej kapacity). Objem sa dá znížiť alebo zvýšiť parametrom `GENERATOR_BASE_RATE`.
 - **Udalosti:** `flight.offer.observed` sa posiela pri každom zbere: pri 2 zberoch denne u Ryanairu a 4 u Travelpayouts ≈ 3 800 udalostí denne, spolu desaťtisíce až státisíce. Počet udalostí je teda o rád väčší ako počet „leteniek“, čo je v súlade s rozlíšením v zadaní.
 - **Rozhodnutie pre fázu 6:** generátor s náhodnou popularitou ponúk (lognormálne rozdelenie so seedom): väčšina ponúk sa predáva málo, malá časť výrazne, takže sa spúšťajú aj cenové prahy 50/75/90 %. Pri predvolenom `base_rate` je objem desiatky tisíc predaných miest za týždne; používateľ chce radšej viac dát než menej.
+
+## Denník zmien objemu udalostí
+
+Vyučujúci odporúča zostať pod 500 000 udalostí (počet `events` v `/api/v1/stats`, t. j. `core.event_log`; čo presne sa počíta, treba ešte potvrdiť: v `lake.message` je už 464 664 správ). Hodnoty sa menia iba v `.env` na serveri, potom sa kontajner `app` musí vytvoriť znova (`up -d --force-recreate app`); predvolené hodnoty v kóde a v `.env.example` (`GENERATOR_BASE_RATE=0.004`, `SCHEDULER_RYANAIR_HOURS=12`, `SCHEDULER_TRAVELPAYOUTS_HOURS=6`) ostávajú, testy sa na ne spoliehajú.
+
+| Dátum | Zmena | Dôvod | `events` v tom čase | Prírastok za deň: odhad → skutočnosť |
+|---|---|---|---|---|
+| do 25. 10. 2026 | `GENERATOR_BASE_RATE` 0,004; Ryanair každých 12 h; Travelpayouts každých 6 h | východisko | 199 105 (25. 10.) | ≈10 200 |
+| 25. 10. 2026 11:56 | `GENERATOR_BASE_RATE` 0,0025 | odhad ≈466 tis. k 25. 11. | 199 105 | ≈8 900 → ≈9 000 (25. 10. – 3. 11.) |
+| 3. 11. 2026 14:50 | `GENERATOR_BASE_RATE` 0,0015 | odhad 478 tis. k 25. 11. bol tesný | 280 335 | ≈7 900 → ≈8 460 (3. 11. – 8. 11.) |
+| 8. 11. 2026 18:58 | `GENERATOR_BASE_RATE` 0,0005 a `SCHEDULER_RYANAIR_HOURS` 24 | termín je koniec novembra, nie 25. 11.: pri ≈8 460 denne by sa 500 tis. prekročilo okolo 29. 11. (≈513 tis. k 1. 12.) | 325 193 (8. 11. 18:45) | odhad ≈5 500; k 1. 12. ≈448 tis. |
+
+Poznámky:
+- Odhady boli opakovane nižšie než skutočnosť (7 900 oproti 8 460 denne), lebo ponúk pribúda (≈56 denne), a s nimi predaje aj udalosti `observed`.
+- Odhadované zloženie ≈8 460 udalostí denne (pred zmenou z 8. 11.): Ryanair `observed` ≈2 600, Ryanair `price_changed` ≈1 460, Travelpayouts ≈1 900, generátor leteniek ≈1 640, snímky divadla ≈470, ostatné ≈300. Je to odhad z celkových počtov podľa typu, nie z denného rozpisu.
+- Každý reštart `app` pridá jednorazovo ≈1 800 udalostí (všetky zberače sa spustia hneď).
+- Kontrolné body: 15. 11. očakávame ≈360 tis. (ak je to výrazne viac, odhad prepočítať); najbližšia možnosť pri prekročení rizika: Travelpayouts 24 h, snímky divadla 12 h, generátor 0,0003 (odhad ≈3 400 denne, ≈401 tis. k 1. 12.).
 
 ## Poznámky k zdrojom (dopĺňať priebežne)
 - Travelpayouts (overené 2026-10-03, `market=sk`, `currency=eur`, v3 `prices_for_dates`, `one_way=true`):
